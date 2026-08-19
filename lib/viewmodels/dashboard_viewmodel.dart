@@ -3,6 +3,7 @@ import '../models/business_config.dart';
 import '../models/sale.dart';
 import '../models/inventory_item.dart';
 import '../services/database_service.dart';
+import 'inventory_viewmodel.dart';
 
 class ProductItem {
   final String name;
@@ -22,9 +23,8 @@ class DashboardState {
   final BusinessConfig? config;
   final List<SaleItem> cart;
   final List<Sale> salesHistory;
-  final List<InventoryItem> inventory;
   final List<ProductItem> availableProducts;
-  final String activeTab; // 'register', 'orders', 'inventory', 'reports'
+  final String activeTab; // 'register', 'orders', 'reports' (inventory is separate)
   final List<Sale> activeKotQueue; 
   final bool isProcessingCheckout;
   final String orderType; // 'Retail', 'Dine-In', 'Takeaway', 'Delivery'
@@ -35,9 +35,8 @@ class DashboardState {
     this.config,
     this.cart = const [],
     this.salesHistory = const [],
-    this.inventory = const [],
     this.availableProducts = const [],
-    this.activeTab = 'register', // default to register screen
+    this.activeTab = 'register',
     this.activeKotQueue = const [],
     this.isProcessingCheckout = false,
     this.orderType = 'Retail',
@@ -49,7 +48,6 @@ class DashboardState {
     BusinessConfig? config,
     List<SaleItem>? cart,
     List<Sale>? salesHistory,
-    List<InventoryItem>? inventory,
     List<ProductItem>? availableProducts,
     String? activeTab,
     List<Sale>? activeKotQueue,
@@ -62,7 +60,6 @@ class DashboardState {
       config: config ?? this.config,
       cart: cart ?? this.cart,
       salesHistory: salesHistory ?? this.salesHistory,
-      inventory: inventory ?? this.inventory,
       availableProducts: availableProducts ?? this.availableProducts,
       activeTab: activeTab ?? this.activeTab,
       activeKotQueue: activeKotQueue ?? this.activeKotQueue,
@@ -76,19 +73,23 @@ class DashboardState {
 
 class DashboardViewModel extends StateNotifier<DashboardState> {
   final DatabaseService _dbService;
+  final Ref _ref;
 
-  DashboardViewModel(this._dbService) : super(DashboardState()) {
+  DashboardViewModel(this._dbService, this._ref) : super(DashboardState()) {
     initDashboard();
+
+    // Reactively listen to external inventory updates to keep products catalog sync'd
+    _ref.listen<InventoryState>(inventoryProvider, (previous, next) {
+      _syncProductsFromInventory(next.inventory);
+    });
   }
 
   Future<void> initDashboard() async {
     final config = await _dbService.getBusinessConfig();
     if (config != null) {
-      final products = _loadProductsForType(config.businessType);
       final sales = await _dbService.getSales();
       final inventory = await _dbService.getInventory();
 
-      // Set default order type based on business type
       String defaultOrderType = 'Retail';
       if (config.businessType == 'Restaurant & Hotel' || config.businessType == 'Cafe & Bakery') {
         defaultOrderType = 'Dine-In';
@@ -96,58 +97,46 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
 
       state = state.copyWith(
         config: config,
-        availableProducts: products,
         salesHistory: sales,
-        inventory: inventory,
+        availableProducts: _mapInventoryToProducts(inventory),
         orderType: defaultOrderType,
       );
     }
   }
 
-  List<ProductItem> _loadProductsForType(String type) {
-    switch (type) {
-      case 'Cafe & Bakery':
-        return [
-          ProductItem(name: 'Egg Bun', price: 120.0, category: 'Short Eats', emoji: '🥯'),
-          ProductItem(name: 'Fish Pastry', price: 140.0, category: 'Short Eats', emoji: '🥐'),
-          ProductItem(name: 'Ulundu Vadai', price: 80.0, category: 'Short Eats', emoji: '🍩'),
-          ProductItem(name: 'Milk Coffee', price: 150.0, category: 'Beverages', emoji: '☕'),
-          ProductItem(name: 'Plain Tea', price: 60.0, category: 'Beverages', emoji: '🍵'),
-          ProductItem(name: 'Chocolate Gateau Slice', price: 350.0, category: 'Cakes', emoji: '🍰'),
-          ProductItem(name: 'Woodapple Juice', price: 200.0, category: 'Beverages', emoji: '🥤'),
-        ];
-      case 'Restaurant & Hotel':
-        return [
-          ProductItem(name: 'Chicken Kottu (L)', price: 850.0, category: 'Kottu', emoji: '🍛'),
-          ProductItem(name: 'Egg Kottu', price: 650.0, category: 'Kottu', emoji: '🍛'),
-          ProductItem(name: 'Cheese Kottu', price: 950.0, category: 'Kottu', emoji: '🧀'),
-          ProductItem(name: 'Chicken Fried Rice', price: 800.0, category: 'Rice', emoji: '🍚'),
-          ProductItem(name: 'Seni Sambal Egg Hopper', price: 120.0, category: 'Hoppers', emoji: '🍳'),
-          ProductItem(name: 'Plain Hopper', price: 50.0, category: 'Hoppers', emoji: '🥞'),
-          ProductItem(name: 'Ginger Beer (EGB)', price: 180.0, category: 'Beverages', emoji: '🍺'),
-        ];
-      case 'Service & Other':
-        return [
-          ProductItem(name: 'Standard Haircut', price: 700.0, category: 'Salon', emoji: '✂️'),
-          ProductItem(name: 'Beard Trim & Style', price: 400.0, category: 'Salon', emoji: '🪒'),
-          ProductItem(name: 'Full Vehicle Wash', price: 2500.0, category: 'Car Care', emoji: '🚗'),
-          ProductItem(name: 'Interior Detailing', price: 1500.0, category: 'Car Care', emoji: '🧼'),
-          ProductItem(name: 'General Consultation', price: 1000.0, category: 'Service', emoji: '📋'),
-          ProductItem(name: 'Urgent Device Repair', price: 3000.0, category: 'Repair', emoji: '🛠️'),
-        ];
-      case 'Grocery & Retail':
-      default:
-        return [
-          ProductItem(name: 'Keeri Samba Rice 1kg', price: 280.0, category: 'Provisions', emoji: '🌾'),
-          ProductItem(name: 'White Sugar 1kg', price: 240.0, category: 'Provisions', emoji: '🍬'),
-          ProductItem(name: 'Astra Margarine 250g', price: 550.0, category: 'Dairy', emoji: '🧈'),
-          ProductItem(name: 'Anchor Milk Powder 400g', price: 1050.0, category: 'Dairy', emoji: '🥛'),
-          ProductItem(name: 'Red Dhal 1kg', price: 320.0, category: 'Provisions', emoji: '🧆'),
-          ProductItem(name: 'Dilmah Tea 100g', price: 450.0, category: 'Beverages', emoji: '☕'),
-          ProductItem(name: 'Coconut Oil 1L', price: 680.0, category: 'Provisions', emoji: '🥥'),
-          ProductItem(name: 'Munchee Super Lemon Puff', price: 150.0, category: 'Snacks', emoji: '🍪'),
-        ];
-    }
+  void _syncProductsFromInventory(List<InventoryItem> items) {
+    state = state.copyWith(
+      availableProducts: _mapInventoryToProducts(items),
+    );
+  }
+
+  List<ProductItem> _mapInventoryToProducts(List<InventoryItem> items) {
+    return items.map((item) {
+      return ProductItem(
+        name: item.name,
+        price: item.price,
+        category: item.category,
+        emoji: _getEmojiForCategory(item.category, item.name),
+      );
+    }).toList();
+  }
+
+  String _getEmojiForCategory(String category, String name) {
+    final c = category.toLowerCase();
+    final n = name.toLowerCase();
+    if (n.contains('rice')) return '🌾';
+    if (n.contains('sugar')) return '🍬';
+    if (n.contains('milk')) return '🥛';
+    if (n.contains('tea') || n.contains('coffee')) return '☕';
+    if (n.contains('kottu') || n.contains('fried rice')) return '🍛';
+    if (n.contains('hopper')) return '🥞';
+    if (n.contains('bun') || n.contains('pastry') || n.contains('cracker') || n.contains('cookie') || n.contains('puff') || n.contains('bread')) return '🍪';
+    if (c.contains('beverage') || c.contains('juice') || n.contains('beer')) return '🥤';
+    if (c.contains('short') || c.contains('snack')) return '🥯';
+    if (c.contains('dairy') || c.contains('cheese')) return '🧀';
+    if (c.contains('salon') || n.contains('hair') || n.contains('trim')) return '✂️';
+    if (c.contains('car') || n.contains('wash')) return '🚗';
+    return '📦';
   }
 
   void updateSearchKeyword(String keyword) {
@@ -155,10 +144,21 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
   }
 
   List<ProductItem> get filteredProducts {
-    if (state.searchKeyword.isEmpty) return state.availableProducts;
+    final keyword = state.searchKeyword;
+    if (keyword.isEmpty) return state.availableProducts;
+    
+    // Check if searched keyword is a scanned barcode matching in inventory
+    final matchingBarcodeItems = _ref.read(inventoryProvider).inventory
+        .where((item) => item.barcode == keyword).toList();
+        
+    if (matchingBarcodeItems.isNotEmpty) {
+      final matchedNames = matchingBarcodeItems.map((e) => e.name).toSet();
+      return state.availableProducts.where((p) => matchedNames.contains(p.name)).toList();
+    }
+
     return state.availableProducts.where((p) {
-      return p.name.toLowerCase().contains(state.searchKeyword) ||
-          p.category.toLowerCase().contains(state.searchKeyword);
+      return p.name.toLowerCase().contains(keyword) ||
+          p.category.toLowerCase().contains(keyword);
     }).toList();
   }
 
@@ -179,6 +179,21 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
       state = state.copyWith(
         cart: [...state.cart, SaleItem(name: product.name, price: product.price, quantity: 1, discount: 0.0)],
       );
+    }
+  }
+
+  void addScannedBarcodeToCart(String barcode) {
+    final matchingItems = _ref.read(inventoryProvider).inventory
+        .where((item) => item.barcode == barcode).toList();
+    if (matchingItems.isNotEmpty) {
+      final item = matchingItems.first;
+      final product = ProductItem(
+        name: item.name,
+        price: item.price,
+        category: item.category,
+        emoji: _getEmojiForCategory(item.category, item.name),
+      );
+      addToCart(product);
     }
   }
 
@@ -270,15 +285,14 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
           ? [...state.activeKotQueue, savedSale]
           : state.activeKotQueue;
 
-      // Reload inventory values from database to represent deducted stocks
-      final updatedInventory = await _dbService.getInventory();
+      // Reload inventory values reactive state
+      await _ref.read(inventoryProvider.notifier).loadInventory();
 
       state = state.copyWith(
         cart: [],
         cartDiscount: 0.0,
         salesHistory: updatedHistory,
         activeKotQueue: updatedKotQueue,
-        inventory: updatedInventory,
         isProcessingCheckout: false,
       );
       return true;
@@ -292,30 +306,6 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
     state = state.copyWith(
       activeKotQueue: state.activeKotQueue.where((sale) => sale.id != saleId).toList(),
     );
-  }
-
-  Future<void> restockInventoryItem(int itemId, double addQty) async {
-    final updatedList = await Future.wait(state.inventory.map((item) async {
-      if (item.id == itemId) {
-        final updatedItem = item.copyWith(stock: item.stock + addQty);
-        await _dbService.updateInventoryItem(updatedItem);
-        return updatedItem;
-      }
-      return item;
-    }));
-    state = state.copyWith(inventory: updatedList);
-  }
-
-  Future<void> setInventoryStockDirect(int itemId, double directQty) async {
-    final updatedList = await Future.wait(state.inventory.map((item) async {
-      if (item.id == itemId) {
-        final updatedItem = item.copyWith(stock: directQty.clamp(0.0, 9999.0));
-        await _dbService.updateInventoryItem(updatedItem);
-        return updatedItem;
-      }
-      return item;
-    }));
-    state = state.copyWith(inventory: updatedList);
   }
 
   // --- Reports Calculation Helper ---
@@ -378,10 +368,16 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
   Future<void> clearAllData() async {
     await _dbService.clearDatabase();
     state = DashboardState();
+    await _ref.read(inventoryProvider.notifier).loadInventory();
+  }
+
+  Future<void> updateConfig(BusinessConfig newConfig) async {
+    await _dbService.saveBusinessConfig(newConfig);
+    state = state.copyWith(config: newConfig);
   }
 }
 
 final dashboardProvider =
     StateNotifierProvider<DashboardViewModel, DashboardState>((ref) {
-  return DashboardViewModel(DatabaseService.instance);
+  return DashboardViewModel(DatabaseService.instance, ref);
 });

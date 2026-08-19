@@ -7,6 +7,9 @@ class BusinessConfig {
   final bool nayaPothaEnabled;
   final bool kotEnabled;
   final bool lankaQrEnabled;
+  final String footerMessage;
+  final bool cashierLockEnabled;
+  final String cashierPin;
 
   BusinessConfig({
     required this.shopName,
@@ -17,6 +20,9 @@ class BusinessConfig {
     required this.nayaPothaEnabled,
     required this.kotEnabled,
     required this.lankaQrEnabled,
+    this.footerMessage = 'ස්තූතියි! නැවත එන්න.',
+    this.cashierLockEnabled = false,
+    this.cashierPin = '1234',
   });
 
   Map<String, dynamic> toMap() {
@@ -29,6 +35,9 @@ class BusinessConfig {
       'nayaPothaEnabled': nayaPothaEnabled ? 1 : 0,
       'kotEnabled': kotEnabled ? 1 : 0,
       'lankaQrEnabled': lankaQrEnabled ? 1 : 0,
+      'footerMessage': footerMessage,
+      'cashierLockEnabled': cashierLockEnabled ? 1 : 0,
+      'cashierPin': cashierPin,
     };
   }
 
@@ -42,6 +51,9 @@ class BusinessConfig {
       nayaPothaEnabled: (map['nayaPothaEnabled'] ?? 0) == 1,
       kotEnabled: (map['kotEnabled'] ?? 0) == 1,
       lankaQrEnabled: (map['lankaQrEnabled'] ?? 0) == 1,
+      footerMessage: map['footerMessage'] ?? 'ස්තූතියි! නැවත එන්න.',
+      cashierLockEnabled: (map['cashierLockEnabled'] ?? 0) == 1,
+      cashierPin: map['cashierPin'] ?? '1234',
     );
   }
 
@@ -54,6 +66,9 @@ class BusinessConfig {
     bool? nayaPothaEnabled,
     bool? kotEnabled,
     bool? lankaQrEnabled,
+    String? footerMessage,
+    bool? cashierLockEnabled,
+    String? cashierPin,
   }) {
     return BusinessConfig(
       shopName: shopName ?? this.shopName,
@@ -64,6 +79,9 @@ class BusinessConfig {
       nayaPothaEnabled: nayaPothaEnabled ?? this.nayaPothaEnabled,
       kotEnabled: kotEnabled ?? this.kotEnabled,
       lankaQrEnabled: lankaQrEnabled ?? this.lankaQrEnabled,
+      footerMessage: footerMessage ?? this.footerMessage,
+      cashierLockEnabled: cashierLockEnabled ?? this.cashierLockEnabled,
+      cashierPin: cashierPin ?? this.cashierPin,
     );
   }
 }

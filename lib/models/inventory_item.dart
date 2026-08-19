@@ -5,6 +5,9 @@ class InventoryItem {
   final String unit;
   final double minStock;
   final double price;
+  final String barcode;
+  final String category;
+  final double costPrice;
 
   InventoryItem({
     this.id,
@@ -13,6 +16,9 @@ class InventoryItem {
     required this.unit,
     required this.minStock,
     required this.price,
+    this.barcode = '',
+    this.category = 'General',
+    this.costPrice = 0.0,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +29,9 @@ class InventoryItem {
       'unit': unit,
       'minStock': minStock,
       'price': price,
+      'barcode': barcode,
+      'category': category,
+      'costPrice': costPrice,
     };
   }
 
@@ -34,6 +43,9 @@ class InventoryItem {
       unit: map['unit'] ?? 'pcs',
       minStock: (map['minStock'] as num?)?.toDouble() ?? 0.0,
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
+      barcode: map['barcode'] ?? '',
+      category: map['category'] ?? 'General',
+      costPrice: (map['costPrice'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -44,6 +56,9 @@ class InventoryItem {
     String? unit,
     double? minStock,
     double? price,
+    String? barcode,
+    String? category,
+    double? costPrice,
   }) {
     return InventoryItem(
       id: id ?? this.id,
@@ -52,6 +67,9 @@ class InventoryItem {
       unit: unit ?? this.unit,
       minStock: minStock ?? this.minStock,
       price: price ?? this.price,
+      barcode: barcode ?? this.barcode,
+      category: category ?? this.category,
+      costPrice: costPrice ?? this.costPrice,
     );
   }
 }

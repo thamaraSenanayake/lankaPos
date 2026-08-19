@@ -67,6 +67,7 @@ class BusinessSetupViewModel extends StateNotifier<BusinessConfig> {
     }
     try {
       await _dbService.saveBusinessConfig(state);
+      await _dbService.initializeDefaultData(state.businessType);
       return true;
     } catch (_) {
       return false;

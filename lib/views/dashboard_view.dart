@@ -4,8 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import '../models/sale.dart';
-import '../models/inventory_item.dart';
 import 'business_setup_view.dart';
+import 'inventory_view.dart';
+import 'naya_potha_view.dart';
+import 'business_health_view.dart';
+import 'hardware_settings_view.dart';
+import 'dialogs/mock_scanner_dialog.dart';
+import 'dialogs/payment_drawer_dialog.dart';
+import 'dialogs/item_discount_dialog.dart';
+import 'dialogs/bill_discount_dialog.dart';
 
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
@@ -84,15 +91,21 @@ class DashboardView extends ConsumerWidget {
       child: Row(
         children: [
           // App Title
-          Text(
-            'LankaPOS',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF10B981),
-            ),
+          Row(
+            children: [
+              const Icon(Icons.storefront, color: Color(0xFF10B981), size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'LankaPOS',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF10B981),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 24),
 
           // Search Field (Only for Register Tab)
           if (state.activeTab == 'register')
@@ -109,7 +122,7 @@ class DashboardView extends ConsumerWidget {
                   style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
                   onChanged: viewModel.updateSearchKeyword,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFFBBCABF), size: 20),
+                    prefixIcon: const Icon(Icons.search, color: Color(0xFFBBCABF), size: 20),
                     hintText: 'Search product or scan ISBN/EAN',
                     hintStyle: GoogleFonts.inter(color: const Color(0xFFBBCABF).withOpacity(0.4), fontSize: 13),
                     border: InputBorder.none,
@@ -122,6 +135,20 @@ class DashboardView extends ConsumerWidget {
             const Spacer(),
 
           const SizedBox(width: 16),
+
+          // Camera Barcode Scanner Trigger Button
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF10B981)),
+            tooltip: 'Camera Barcode Lookup',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (c) => const MockScannerDialog(),
+              );
+            },
+          ),
+
+          const SizedBox(width: 12),
 
           // Sync Badge
           Container(
@@ -138,7 +165,7 @@ class DashboardView extends ConsumerWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEC6A06), // Offline warning dot
+                    color: Color(0xFFEC6A06), // Offline dot indicator
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -174,7 +201,7 @@ class DashboardView extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Cashier: Kasun',
+                'Kasun',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -330,7 +357,7 @@ class DashboardView extends ConsumerWidget {
       case 'orders':
         return _buildOrdersScreen(context, state, viewModel);
       case 'inventory':
-        return _buildInventoryScreen(context, state, viewModel);
+        return const InventoryView();
       case 'reports':
         return _buildReportsScreen(context, state, viewModel);
       case 'register':
@@ -356,7 +383,6 @@ class DashboardView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Order Type Selector Header
               _buildOrderTypeSelector(state, viewModel),
 
               Padding(
@@ -373,8 +399,13 @@ class DashboardView extends ConsumerWidget {
 
               // Catalog Grid
               Expanded(
-                child: state.availableProducts.isEmpty
-                    ? const Center(child: Text('No products available.'))
+                child: viewModel.filteredProducts.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No products matched this filter search.',
+                          style: GoogleFonts.inter(color: const Color(0xFFBBCABF).withOpacity(0.4)),
+                        ),
+                      )
                     : GridView.builder(
                         padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -394,7 +425,7 @@ class DashboardView extends ConsumerWidget {
           ),
         ),
 
-        // Cart Drawer Side Panel (Only on desktop)
+        // Cart Drawer Panel (Only on desktop)
         if (isDesktop)
           Container(
             width: 380,
@@ -414,7 +445,6 @@ class DashboardView extends ConsumerWidget {
     final businessType = state.config!.businessType;
     final List<String> allowedTypes = [];
 
-    // Filter available order types based on business setup category
     if (businessType == 'Restaurant & Hotel' || businessType == 'Cafe & Bakery') {
       allowedTypes.addAll(['Dine-In', 'Takeaway', 'Delivery']);
     } else {
@@ -562,7 +592,7 @@ class DashboardView extends ConsumerWidget {
         ),
         const Divider(color: Color(0xFF334155), height: 1),
 
-        // Cart Items Scroll
+        // Cart Scroll
         Expanded(
           child: state.cart.isEmpty
               ? Center(
@@ -614,7 +644,12 @@ class DashboardView extends ConsumerWidget {
                                     ],
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => _showItemDiscountDialog(context, item, viewModel),
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (c) => ItemDiscountDialog(item: item, viewModel: viewModel),
+                                        );
+                                      },
                                       child: Text(
                                         'Discount',
                                         style: GoogleFonts.inter(
@@ -658,7 +693,7 @@ class DashboardView extends ConsumerWidget {
                             width: 65,
                             child: Text(
                               'LKR ${item.total.toStringAsFixed(0)}',
-                              textAlign: Alignment.centerRight as TextAlign?, // note: corrected warning placeholder
+                              textAlign: TextAlign.right,
                               style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
@@ -677,13 +712,12 @@ class DashboardView extends ConsumerWidget {
         ),
         const Divider(color: Color(0xFF334155), height: 1),
 
-        // Overall Totals & Payment triggers
+        // Totals & Checkout Proceed Panel
         Container(
           padding: const EdgeInsets.all(16),
           color: const Color(0xFF111E2E),
           child: Column(
             children: [
-              // Subtotal
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -692,8 +726,6 @@ class DashboardView extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 6),
-
-              // Overall Discount trigger
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -701,10 +733,20 @@ class DashboardView extends ConsumerWidget {
                     children: [
                       Text('Bill Discount ', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF))),
                       GestureDetector(
-                        onTap: () => _showBillDiscountDialog(context, state, viewModel),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (c) => BillDiscountDialog(state: state, viewModel: viewModel),
+                          );
+                        },
                         child: Text(
                           '(${state.cartDiscount.toStringAsFixed(0)}%)',
-                          style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF10B981), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: const Color(0xFF10B981),
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
                     ],
@@ -713,8 +755,6 @@ class DashboardView extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 10),
-
-              // Grand Total
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -726,8 +766,6 @@ class DashboardView extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Proceed / Checkout Trigger
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -740,8 +778,11 @@ class DashboardView extends ConsumerWidget {
                   onPressed: state.cart.isEmpty
                       ? null
                       : () {
-                          if (isMobile) Navigator.pop(context); // Close bottom sheet
-                          _showPaymentDrawerDialog(context, state, viewModel);
+                          if (isMobile) Navigator.pop(context);
+                          showDialog(
+                            context: context,
+                            builder: (c) => PaymentDrawerDialog(state: state, viewModel: viewModel),
+                          );
                         },
                   child: Text(
                     'PROCEED TO CHECKOUT',
@@ -765,7 +806,7 @@ class DashboardView extends ConsumerWidget {
         borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
       ),
       builder: (context) {
-        return Container(
+        return SizedBox(
           height: MediaQuery.of(context).size.height * 0.8,
           child: _buildCartPanel(context, state, viewModel, isMobile: true),
         );
@@ -951,9 +992,10 @@ class DashboardView extends ConsumerWidget {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                 ),
                                 icon: const Icon(Icons.print, size: 14),
-                                label: const Text('REPRINT BILL'),
+                                label: const Text('REPRINT RECEIPT'),
                                 onPressed: () {
-                                  _showMockPrintInvoiceDialog(context, sale);
+                                  // Trigger mock dialog inside payment_drawer
+                                  _showReceiptPopup(context, sale);
                                 },
                               ),
                             ],
@@ -966,6 +1008,61 @@ class DashboardView extends ConsumerWidget {
               );
             },
           );
+  }
+
+  void _showReceiptPopup(BuildContext context, Sale sale) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: const Text('Invoice Reprint', style: TextStyle(color: Colors.white)),
+          content: Container(
+            width: 260,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF475569)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Center(child: Text('=== REPRINT RECEIPT ===', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                const SizedBox(height: 6),
+                Text('Order ID: #${sale.id}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                Text('Date: ${DateFormat('yyyy-MM-dd kk:mm').format(sale.timestamp)}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                Text('Payment: ${sale.paymentMethod}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                const Divider(color: Color(0xFF334155), height: 8),
+                ...sale.items.map((i) => Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${i.quantity}x ${i.name}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                        Text('LKR ${i.total.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                      ],
+                    )),
+                const Divider(color: Color(0xFF334155), height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('TOTAL:', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text('LKR ${sale.totalAmount.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            )
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildKitchenQueueTab(
@@ -1075,136 +1172,7 @@ class DashboardView extends ConsumerWidget {
   }
 
   // ==========================================
-  // SCREEN 3: INVENTORY SCREEN
-  // ==========================================
-  Widget _buildInventoryScreen(
-    BuildContext context,
-    DashboardState state,
-    DashboardViewModel viewModel,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Stocks & Materials Inventory 📦',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFFF8FAFC),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Auto deducts items upon checkout sale logging. Tap to restock.',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF)),
-              ),
-            ],
-          ),
-        ),
-        const Divider(color: Color(0xFF334155), height: 1),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.inventory.length,
-            itemBuilder: (context, index) {
-              final item = state.inventory[index];
-              final isLowStock = item.stock <= item.minStock;
-
-              return Card(
-                color: const Color(0xFF1E293B),
-                margin: const EdgeInsets.only(bottom: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(
-                    color: isLowStock ? Colors.orangeAccent.withOpacity(0.5) : const Color(0xFF334155),
-                    width: 0.5,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  item.name,
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 15),
-                                ),
-                                if (isLowStock) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orangeAccent.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      'LOW STOCK',
-                                      style: GoogleFonts.inter(fontSize: 9, color: Colors.orangeAccent, fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Base Price: LKR ${item.price.toStringAsFixed(0)} • Alert Trigger Level: ${item.minStock.toStringAsFixed(0)} ${item.unit}',
-                              style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFFBBCABF)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '${item.stock.toStringAsFixed(0)} ${item.unit}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: isLowStock ? Colors.orangeAccent : const Color(0xFF10B981),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF273647),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            onPressed: () => _showRestockDialog(context, item, viewModel),
-                            child: const Text('RESTOCK'),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ==========================================
-  // SCREEN 4: REPORTS SCREEN
+  // SCREEN 3: REPORTS SCREEN
   // ==========================================
   Widget _buildReportsScreen(
     BuildContext context,
@@ -1227,6 +1195,48 @@ class DashboardView extends ConsumerWidget {
             style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 16),
+
+          // Operations menu links
+          Text(
+            'Ledger & System Operations',
+            style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF), letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 8),
+          GridView.count(
+            crossAxisCount: MediaQuery.of(context).size.width >= 768 ? 3 : 1,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2.8,
+            children: [
+              _buildNavigationCard(
+                context,
+                title: 'Naya Potha Credit Ledger',
+                subtitle: 'Manage customer debts & supplier invoices',
+                icon: Icons.menu_book,
+                color: Colors.orangeAccent,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const NayaPothaView())),
+              ),
+              _buildNavigationCard(
+                context,
+                title: 'Business Health & P&L',
+                subtitle: 'Analyze sales revenues & cost margins',
+                icon: Icons.monitor_heart,
+                color: Colors.cyanAccent,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const BusinessHealthView())),
+              ),
+              _buildNavigationCard(
+                context,
+                title: 'Hardware & POS Settings',
+                subtitle: 'Configure printing papers and peripherals',
+                icon: Icons.settings,
+                color: const Color(0xFF10B981),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const HardwareSettingsView())),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
 
           // Analytical Cards Row
           GridView.count(
@@ -1263,7 +1273,7 @@ class DashboardView extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Split columns: Payment breakdown vs Top items
+          // Payment breakdowns vs top products
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1432,439 +1442,67 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  // ==========================================
-  // MODALS & DIALOGS
-  // ==========================================
-
-  void _showItemDiscountDialog(BuildContext context, SaleItem item, DashboardViewModel viewModel) {
-    final controller = TextEditingController(text: item.discount > 0 ? item.discount.toStringAsFixed(0) : '');
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: Text('Apply Item Discount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Enter discount percentage (0-100%) for ${item.name}:', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF))),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 10',
-                  suffixText: '%',
-                  suffixStyle: const TextStyle(color: Colors.white),
-                  filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
+  Widget _buildNavigationCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF334155), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('CANCEL', style: TextStyle(color: Color(0xFFBBCABF))),
+              child: Icon(icon, color: color, size: 20),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
-              onPressed: () {
-                final discount = double.tryParse(controller.text) ?? 0.0;
-                viewModel.updateItemDiscount(item.name, discount);
-                Navigator.pop(context);
-              },
-              child: const Text('APPLY'),
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  void _showBillDiscountDialog(BuildContext context, DashboardState state, DashboardViewModel viewModel) {
-    final controller = TextEditingController(text: state.cartDiscount > 0 ? state.cartDiscount.toStringAsFixed(0) : '');
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: Text('Apply Bill Discount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Enter overall checkout bill discount (0-100%):', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF))),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 5',
-                  suffixText: '%',
-                  suffixStyle: const TextStyle(color: Colors.white),
-                  filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('CANCEL', style: TextStyle(color: const Color(0xFFBBCABF))),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
-              onPressed: () {
-                final discount = double.tryParse(controller.text) ?? 0.0;
-                viewModel.updateCartDiscount(discount);
-                Navigator.pop(context);
-              },
-              child: const Text('APPLY'),
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  void _showPaymentDrawerDialog(
-    BuildContext context,
-    DashboardState state,
-    DashboardViewModel viewModel,
-  ) {
-    String selectedMethod = 'Cash';
-    final customerController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF334155))),
-              title: Text('Checkout Invoice Payment', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Choose payment type for total LKR ${viewModel.cartTotal.toStringAsFixed(2)}:', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF))),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _buildPaymentOptionChip('Cash 💵', selectedMethod == 'Cash', () => setModalState(() => selectedMethod = 'Cash')),
-                      _buildPaymentOptionChip('Card 💳', selectedMethod == 'Card', () => setModalState(() => selectedMethod = 'Card')),
-                      if (state.config!.lankaQrEnabled)
-                        _buildPaymentOptionChip('LANKAQR 📲', selectedMethod == 'LANKAQR', () => setModalState(() => selectedMethod = 'LANKAQR')),
-                      if (state.config!.nayaPothaEnabled)
-                        _buildPaymentOptionChip('Naya (Credit) 📖', selectedMethod == 'Naya Potha', () => setModalState(() => selectedMethod = 'Naya Potha')),
-                    ],
-                  ),
-
-                  if (selectedMethod == 'Naya Potha') ...[
-                    const SizedBox(height: 16),
-                    Text('CUSTOMER DETAILS', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: customerController,
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: "Enter customer's full name",
-                        hintStyle: GoogleFonts.inter(color: const Color(0xFFBBCABF).withOpacity(0.4), fontSize: 12),
-                        filled: true,
-                        fillColor: const Color(0xFF0F172A),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                  ],
-
-                  if (selectedMethod == 'LANKAQR') ...[
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                            child: Image.network(
-                              'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=LANKAQR_INVOICE_TOTAL_${viewModel.cartTotal}',
-                              width: 100,
-                              height: 100,
-                              errorBuilder: (c, e, s) => const Icon(Icons.qr_code_2, size: 100, color: Colors.black),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text('Scan to pay LKR ${viewModel.cartTotal.toStringAsFixed(0)}', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF10B981), fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    )
-                  ]
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: const Color(0xFFBBCABF).withOpacity(0.7),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
-              actions: [
-                // Print KOT option (only enabled if restaurant Dine-In orders are processed)
-                if (state.config!.kotEnabled && state.orderType == 'Dine-In')
-                  TextButton.icon(
-                    icon: const Icon(Icons.restaurant, size: 14, color: Colors.orangeAccent),
-                    label: Text('KOT', style: GoogleFonts.inter(color: Colors.orangeAccent, fontSize: 12)),
-                    onPressed: () {
-                      _showMockKotTicketDialog(context, state.cart, state.orderType);
-                    },
-                  ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('CANCEL', style: TextStyle(color: Color(0xFFBBCABF))),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
-                  onPressed: () async {
-                    if (selectedMethod == 'Naya Potha' && customerController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please specify customer name for credit logging.'), backgroundColor: Colors.orangeAccent),
-                      );
-                      return;
-                    }
-                    final customerName = selectedMethod == 'Naya Potha' ? customerController.text.trim() : null;
-                    final tempCartItems = List<SaleItem>.from(state.cart); // Backup cart items
-                    final tempTotal = viewModel.cartTotal;
-                    final tempDiscount = viewModel.cartDiscountAmount;
-
-                    Navigator.pop(context); // close modal
-
-                    final success = await viewModel.checkout(paymentMethod: selectedMethod, customerName: customerName);
-                    if (!context.mounted) return;
-
-                    if (success) {
-                      final generatedSale = Sale(
-                        id: state.salesHistory.isNotEmpty ? state.salesHistory.first.id : 1,
-                        timestamp: DateTime.now(),
-                        items: tempCartItems,
-                        totalAmount: tempTotal,
-                        paymentMethod: selectedMethod,
-                        customerName: customerName,
-                        orderType: state.orderType,
-                        discountAmount: tempDiscount,
-                      );
-                      _showMockPrintInvoiceDialog(context, generatedSale);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Checkout failed.'), backgroundColor: Colors.redAccent),
-                      );
-                    }
-                  },
-                  child: const Text('COMPLETE SALE'),
-                )
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildPaymentOptionChip(String label, bool isSelected, VoidCallback onTap) {
-    return ChoiceChip(
-      showCheckmark: false,
-      label: Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? const Color(0xFF0F172A) : Colors.white)),
-      selected: isSelected,
-      onSelected: (_) => onTap(),
-      selectedColor: const Color(0xFF10B981),
-      backgroundColor: const Color(0xFF0F172A),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6), side: BorderSide(color: isSelected ? const Color(0xFF10B981) : const Color(0xFF475569))),
-    );
-  }
-
-  void _showMockKotTicketDialog(BuildContext context, List<SaleItem> items, String type) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: Row(
-            children: const [
-              Icon(Icons.kitchen, color: Colors.orangeAccent),
-              SizedBox(width: 8),
-              Text('Kitchen Ticket Printed 🧾', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Container(
-            width: 260,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(6), border: Border.all(color: const Color(0xFF475569))),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Center(child: Text('=== KITCHEN ORDER ===', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
-                const SizedBox(height: 6),
-                Text('Type: $type', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                Text('Date: ${DateFormat('kk:mm:ss').format(DateTime.now())}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                const Divider(color: Color(0xFF334155), height: 12),
-                ...items.map((i) => Text('${i.quantity}x ${i.name}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
-                const Divider(color: Color(0xFF334155), height: 12),
-                const Center(child: Text('[KOT queued successfully]', style: TextStyle(color: Colors.orangeAccent, fontSize: 10, fontStyle: FontStyle.italic))),
-              ],
             ),
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            )
+            const Icon(Icons.chevron_right, color: Color(0xFFBBCABF), size: 16),
           ],
-        );
-      },
-    );
-  }
-
-  void _showMockPrintInvoiceDialog(BuildContext context, Sale sale) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: Row(
-            children: const [
-              Icon(Icons.print, color: Color(0xFF10B981)),
-              SizedBox(width: 8),
-              Text('Printing Invoice Receipt...', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Container(
-            width: 280,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(6), border: Border.all(color: const Color(0xFF475569))),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Center(
-                  child: Text(
-                    '--- LANKAPOS INVOICE ---',
-                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text('Order ID: #${sale.id}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                Text('Date: ${DateFormat('yyyy-MM-dd kk:mm').format(sale.timestamp)}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                Text('Type: ${sale.orderType}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                Text('Payment: ${sale.paymentMethod}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                if (sale.customerName != null) Text('Customer: ${sale.customerName}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                const Divider(color: Color(0xFF334155), height: 12),
-                ...sale.items.map((i) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 1),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${i.quantity}x ${i.name}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                          Text('LKR ${i.total.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                        ],
-                      ),
-                    )),
-                const Divider(color: Color(0xFF334155), height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Subtotal:', style: TextStyle(color: Color(0xFFBBCABF), fontSize: 11)),
-                    Text('LKR ${(sale.totalAmount + sale.discountAmount).toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                  ],
-                ),
-                if (sale.discountAmount > 0)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Discount:', style: TextStyle(color: Colors.orangeAccent, fontSize: 11)),
-                      Text('- LKR ${sale.discountAmount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.orangeAccent, fontSize: 11)),
-                    ],
-                  ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('GRAND TOTAL:', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                    Text('LKR ${sale.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Center(
-                  child: Text('THANK YOU!', style: TextStyle(color: Color(0xFFBBCABF), fontSize: 10, fontStyle: FontStyle.italic)),
-                )
-              ],
-            ),
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('DONE'),
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  void _showRestockDialog(BuildContext context, InventoryItem item, DashboardViewModel viewModel) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          title: Text('Restock Stock Item', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Current Stock: ${item.stock.toStringAsFixed(0)} ${item.unit}', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF))),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Enter quantity to add',
-                  suffixText: item.unit,
-                  suffixStyle: const TextStyle(color: Colors.white),
-                  filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('CANCEL', style: TextStyle(color: Color(0xFFBBCABF))),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: const Color(0xFF0F172A)),
-              onPressed: () {
-                final qty = double.tryParse(controller.text) ?? 0.0;
-                if (qty > 0) {
-                  viewModel.restockInventoryItem(item.id!, qty);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Added $qty ${item.unit} to ${item.name}'), backgroundColor: const Color(0xFF10B981)),
-                  );
-                }
-                Navigator.pop(context);
-              },
-              child: const Text('RESTOCK'),
-            )
-          ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -1874,7 +1512,10 @@ class DashboardView extends ConsumerWidget {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Color(0xFF334155))),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF334155)),
+          ),
           title: Text(
             'Reset App Settings?',
             style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: const Color(0xFFF8FAFC)),
