@@ -9,6 +9,8 @@ import 'inventory_view.dart';
 import 'naya_potha_view.dart';
 import 'business_health_view.dart';
 import 'hardware_settings_view.dart';
+import '../viewmodels/naya_potha_viewmodel.dart';
+import '../viewmodels/business_health_viewmodel.dart';
 import 'dialogs/mock_scanner_dialog.dart';
 import 'dialogs/payment_drawer_dialog.dart';
 import 'dialogs/item_discount_dialog.dart';
@@ -47,7 +49,7 @@ class DashboardView extends ConsumerWidget {
                 children: [
                   if (isLargeScreen) _buildSidebar(state, viewModel),
                   Expanded(
-                    child: _buildActiveScreen(context, state, viewModel),
+                    child: _buildActiveScreen(context, ref, state, viewModel),
                   ),
                 ],
               ),
@@ -66,7 +68,7 @@ class DashboardView extends ConsumerWidget {
                 style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
               ),
               onPressed: () {
-                _showMobileCartBottomSheet(context, state, viewModel);
+                _showMobileCartBottomSheet(context, ref, state, viewModel);
               },
             )
           : null,
@@ -105,7 +107,6 @@ class DashboardView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(width: 24),
 
           // Search Field (Only for Register Tab)
           if (state.activeTab == 'register')
@@ -134,7 +135,7 @@ class DashboardView extends ConsumerWidget {
           else
             const Spacer(),
 
-          const SizedBox(width: 16),
+          // const SizedBox(width: 16),
 
           // Camera Barcode Scanner Trigger Button
           IconButton(
@@ -150,68 +151,8 @@ class DashboardView extends ConsumerWidget {
 
           const SizedBox(width: 12),
 
-          // Sync Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF273647),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF334155), width: 0.5),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEC6A06), // Offline dot indicator
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Offline (Synced)',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFBBCABF),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
           // Cashier Profile
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF10B981), width: 1),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&fit=crop&q=80'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Kasun',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFFF8FAFC),
-                ),
-              ),
-            ],
-          ),
 
-          const SizedBox(width: 8),
 
           IconButton(
             icon: const Icon(Icons.settings_backup_restore, color: Colors.orangeAccent),
@@ -350,6 +291,7 @@ class DashboardView extends ConsumerWidget {
   // --- DISPATCH ACTIVE SCREEN ---
   Widget _buildActiveScreen(
     BuildContext context,
+    WidgetRef ref,
     DashboardState state,
     DashboardViewModel viewModel,
   ) {
@@ -359,10 +301,10 @@ class DashboardView extends ConsumerWidget {
       case 'inventory':
         return const InventoryView();
       case 'reports':
-        return _buildReportsScreen(context, state, viewModel);
+        return _buildReportsScreen(context, ref, state, viewModel);
       case 'register':
       default:
-        return _buildRegisterScreen(context, state, viewModel);
+        return _buildRegisterScreen(context, ref, state, viewModel);
     }
   }
 
@@ -371,6 +313,7 @@ class DashboardView extends ConsumerWidget {
   // ==========================================
   Widget _buildRegisterScreen(
     BuildContext context,
+    WidgetRef ref,
     DashboardState state,
     DashboardViewModel viewModel,
   ) {
@@ -383,7 +326,8 @@ class DashboardView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildOrderTypeSelector(state, viewModel),
+              if (state.config!.kotEnabled)
+                _buildOrderTypeSelector(state, viewModel),
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -435,7 +379,7 @@ class DashboardView extends ConsumerWidget {
                 left: BorderSide(color: Color(0xFF273647), width: 0.5),
               ),
             ),
-            child: _buildCartPanel(context, state, viewModel, isMobile: false),
+            child: _buildCartPanel(context, ref, state, viewModel, isMobile: false),
           ),
       ],
     );
@@ -545,6 +489,7 @@ class DashboardView extends ConsumerWidget {
 
   Widget _buildCartPanel(
     BuildContext context,
+    WidgetRef ref,
     DashboardState state,
     DashboardViewModel viewModel, {
     required bool isMobile,
@@ -781,7 +726,14 @@ class DashboardView extends ConsumerWidget {
                           if (isMobile) Navigator.pop(context);
                           showDialog(
                             context: context,
-                            builder: (c) => PaymentDrawerDialog(state: state, viewModel: viewModel),
+                            builder: (c) => PaymentDrawerDialog(
+                              state: state,
+                              viewModel: viewModel,
+                              onCheckoutSuccess: () {
+                                ref.read(nayaPothaProvider.notifier).loadLedger();
+                                ref.read(businessHealthProvider.notifier).loadHealth();
+                              },
+                            ),
                           );
                         },
                   child: Text(
@@ -797,7 +749,7 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  void _showMobileCartBottomSheet(BuildContext context, DashboardState state, DashboardViewModel viewModel) {
+  void _showMobileCartBottomSheet(BuildContext context, WidgetRef ref, DashboardState state, DashboardViewModel viewModel) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -808,7 +760,7 @@ class DashboardView extends ConsumerWidget {
       builder: (context) {
         return SizedBox(
           height: MediaQuery.of(context).size.height * 0.8,
-          child: _buildCartPanel(context, state, viewModel, isMobile: true),
+          child: _buildCartPanel(context, ref, state, viewModel, isMobile: true),
         );
       },
     );
@@ -1176,12 +1128,18 @@ class DashboardView extends ConsumerWidget {
   // ==========================================
   Widget _buildReportsScreen(
     BuildContext context,
+    WidgetRef ref,
     DashboardState state,
     DashboardViewModel viewModel,
   ) {
     final todaySales = viewModel.totalIncomeToday;
     final todayTx = viewModel.salesCountToday;
-    final creditLedger = viewModel.totalOutstandingNayaCredit;
+
+    // Read from live credit ledger databases
+    final nayaState = ref.watch(nayaPothaProvider);
+    final creditLedger = nayaState.customers.fold(0.0, (sum, acc) => sum + acc.balance);
+    final supplierOutstanding = nayaState.suppliers.fold(0.0, (sum, s) => sum + s.balance);
+
     final breakdown = viewModel.paymentMethodBreakdown;
     final topSellers = viewModel.topSellingProducts;
 
@@ -1240,7 +1198,7 @@ class DashboardView extends ConsumerWidget {
 
           // Analytical Cards Row
           GridView.count(
-            crossAxisCount: MediaQuery.of(context).size.width >= 600 ? 3 : 1,
+            crossAxisCount: MediaQuery.of(context).size.width >= 900 ? 4 : (MediaQuery.of(context).size.width >= 600 ? 2 : 1),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
@@ -1260,6 +1218,13 @@ class DashboardView extends ConsumerWidget {
                 subtitle: 'Outstanding store customer credits',
                 icon: Icons.menu_book,
                 accentColor: Colors.orangeAccent,
+              ),
+              _buildReportMetricCard(
+                title: 'SUPPLIER OUTSTANDING',
+                value: 'LKR ${supplierOutstanding.toStringAsFixed(0)}',
+                subtitle: 'Outstanding invoices to distributors',
+                icon: Icons.add_business,
+                accentColor: Colors.purpleAccent,
               ),
               _buildReportMetricCard(
                 title: 'TOTAL REGISTER TRANSACTIONS',

@@ -4,12 +4,14 @@ import '../services/database_service.dart';
 
 class InventoryState {
   final List<InventoryItem> inventory;
+  final Map<int, List<Map<String, dynamic>>> recipes;
   final String selectedCategoryFilter;
   final bool lowStockOnlyFilter;
   final String searchKeyword;
 
   InventoryState({
     this.inventory = const [],
+    this.recipes = const {},
     this.selectedCategoryFilter = 'All Categories',
     this.lowStockOnlyFilter = false,
     this.searchKeyword = '',
@@ -17,12 +19,14 @@ class InventoryState {
 
   InventoryState copyWith({
     List<InventoryItem>? inventory,
+    Map<int, List<Map<String, dynamic>>>? recipes,
     String? selectedCategoryFilter,
     bool? lowStockOnlyFilter,
     String? searchKeyword,
   }) {
     return InventoryState(
       inventory: inventory ?? this.inventory,
+      recipes: recipes ?? this.recipes,
       selectedCategoryFilter: selectedCategoryFilter ?? this.selectedCategoryFilter,
       lowStockOnlyFilter: lowStockOnlyFilter ?? this.lowStockOnlyFilter,
       searchKeyword: searchKeyword ?? this.searchKeyword,
@@ -39,7 +43,16 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
 
   Future<void> loadInventory() async {
     final list = await _dbService.getInventory();
-    state = state.copyWith(inventory: list);
+    final Map<int, List<Map<String, dynamic>>> recipeMap = {};
+    for (var item in list) {
+      if (item.id != null) {
+        final recipe = await _dbService.getRecipeForProduct(item.id!);
+        if (recipe.isNotEmpty) {
+          recipeMap[item.id!] = recipe;
+        }
+      }
+    }
+    state = state.copyWith(inventory: list, recipes: recipeMap);
   }
 
   void updateCategoryFilter(String category) {

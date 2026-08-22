@@ -4,6 +4,8 @@ import '../models/sale.dart';
 import '../models/inventory_item.dart';
 import '../services/database_service.dart';
 import 'inventory_viewmodel.dart';
+import 'naya_potha_viewmodel.dart';
+import 'business_health_viewmodel.dart';
 
 class ProductItem {
   final String name;
@@ -369,6 +371,8 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
     await _dbService.clearDatabase();
     state = DashboardState();
     await _ref.read(inventoryProvider.notifier).loadInventory();
+    _ref.read(nayaPothaProvider.notifier).loadLedger();
+    _ref.read(businessHealthProvider.notifier).loadHealth();
   }
 
   Future<void> updateConfig(BusinessConfig newConfig) async {

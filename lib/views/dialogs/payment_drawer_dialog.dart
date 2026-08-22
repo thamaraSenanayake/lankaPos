@@ -7,11 +7,13 @@ import '../../viewmodels/dashboard_viewmodel.dart';
 class PaymentDrawerDialog extends StatefulWidget {
   final DashboardState state;
   final DashboardViewModel viewModel;
+  final VoidCallback? onCheckoutSuccess;
 
   const PaymentDrawerDialog({
     super.key,
     required this.state,
     required this.viewModel,
+    this.onCheckoutSuccess,
   });
 
   @override
@@ -151,6 +153,7 @@ class _PaymentDrawerDialogState extends State<PaymentDrawerDialog> {
             if (!context.mounted) return;
 
             if (success) {
+              widget.onCheckoutSuccess?.call();
               final generatedSale = Sale(
                 id: widget.state.salesHistory.isNotEmpty ? widget.state.salesHistory.first.id : 1,
                 timestamp: DateTime.now(),

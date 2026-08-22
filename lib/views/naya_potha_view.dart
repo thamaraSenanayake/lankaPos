@@ -15,7 +15,14 @@ class NayaPothaView extends ConsumerWidget {
     final state = ref.watch(nayaPothaProvider);
     final viewModel = ref.read(nayaPothaProvider.notifier);
 
+    final config = ref.watch(dashboardProvider).config;
+    final nayaEnabled = config?.nayaPothaEnabled ?? true;
 
+    if (!nayaEnabled && state.activeTab == 'Customer') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        viewModel.changeTab('Supplier');
+      });
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -37,63 +44,64 @@ class NayaPothaView extends ConsumerWidget {
         child: Column(
           children: [
             // Dual Tab Selector
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                height: 48,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => viewModel.changeTab('Customer'),
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: state.activeTab == 'Customer' ? const Color(0xFF0F172A) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Customer Debtors',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: state.activeTab == 'Customer' ? const Color(0xFF10B981) : const Color(0xFFBBCABF),
+            if (nayaEnabled)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => viewModel.changeTab('Customer'),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: state.activeTab == 'Customer' ? const Color(0xFF0F172A) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Customer Debtors',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: state.activeTab == 'Customer' ? const Color(0xFF10B981) : const Color(0xFFBBCABF),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => viewModel.changeTab('Supplier'),
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: state.activeTab == 'Supplier' ? const Color(0xFF0F172A) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Supplier Ledger',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: state.activeTab == 'Supplier' ? const Color(0xFF10B981) : const Color(0xFFBBCABF),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => viewModel.changeTab('Supplier'),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: state.activeTab == 'Supplier' ? const Color(0xFF0F172A) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Supplier Ledger',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: state.activeTab == 'Supplier' ? const Color(0xFF10B981) : const Color(0xFFBBCABF),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
             // Summary Header Card
             Padding(

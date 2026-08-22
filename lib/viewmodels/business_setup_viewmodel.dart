@@ -17,6 +17,17 @@ class BusinessSetupViewModel extends StateNotifier<BusinessConfig> {
           lankaQrEnabled: true,
         ));
 
+  Future<void> loadSavedConfig() async {
+    try {
+      final config = await _dbService.getBusinessConfig();
+      if (config != null) {
+        state = config;
+      }
+    } catch (_) {
+      // Safe fallback for testing and uninitialized database factories
+    }
+  }
+
   void updateShopName(String name) {
     state = state.copyWith(shopName: name);
   }

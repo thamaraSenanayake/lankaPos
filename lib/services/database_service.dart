@@ -25,7 +25,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -125,6 +125,18 @@ class DatabaseService {
         timestamp TEXT NOT NULL
       )
     ''');
+
+    // Create Recipes Table (Version 7)
+    await db.execute('''
+      CREATE TABLE recipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        productId INTEGER NOT NULL,
+        ingredientId INTEGER NOT NULL,
+        quantity REAL NOT NULL,
+        FOREIGN KEY (productId) REFERENCES inventory (id) ON DELETE CASCADE,
+        FOREIGN KEY (ingredientId) REFERENCES inventory (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -138,6 +150,19 @@ class DatabaseService {
       await db.execute('DROP TABLE IF EXISTS expenses');
       await _createDB(db, newVersion);
     }
+    if (oldVersion < 7) {
+      await db.execute('DROP TABLE IF EXISTS recipes');
+      await db.execute('''
+        CREATE TABLE recipes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          productId INTEGER NOT NULL,
+          ingredientId INTEGER NOT NULL,
+          quantity REAL NOT NULL,
+          FOREIGN KEY (productId) REFERENCES inventory (id) ON DELETE CASCADE,
+          FOREIGN KEY (ingredientId) REFERENCES inventory (id) ON DELETE CASCADE
+        )
+      ''');
+    }
   }
 
   // --- Business Config operations ---
@@ -148,8 +173,8 @@ class DatabaseService {
   }
 
   Future<void> initializeDefaultData(String businessType) async {
-    await populateDefaultInventory(businessType);
-    await populateDefaultNaya();
+    // await populateDefaultInventory(businessType);
+    // await populateDefaultNaya();
   }
 
   Future<BusinessConfig?> getBusinessConfig() async {
@@ -212,58 +237,58 @@ class DatabaseService {
     }
   }
 
-  Future<void> populateDefaultInventory(String businessType) async {
-    final db = await database;
-    await db.delete('inventory');
+  // Future<void> populateDefaultInventory(String businessType) async {
+  //   final db = await database;
+  //   await db.delete('inventory');
 
-    final List<InventoryItem> defaults = [];
+  //   final List<InventoryItem> defaults = [];
 
-    if (businessType == 'Cafe & Bakery') {
-      defaults.addAll([
-        InventoryItem(name: 'Egg Bun', stock: 50, unit: 'pcs', minStock: 10, price: 120.0, costPrice: 90.0, barcode: '4792000201', category: 'Short Eats'),
-        InventoryItem(name: 'Fish Pastry', stock: 40, unit: 'pcs', minStock: 10, price: 140.0, costPrice: 110.0, barcode: '4792000202', category: 'Short Eats'),
-        InventoryItem(name: 'Ulundu Vadai', stock: 60, unit: 'pcs', minStock: 15, price: 80.0, costPrice: 50.0, barcode: '4792000203', category: 'Short Eats'),
-        InventoryItem(name: 'Milk Coffee', stock: 100, unit: 'cups', minStock: 20, price: 150.0, costPrice: 90.0, barcode: '4792000204', category: 'Beverages'),
-        InventoryItem(name: 'Plain Tea', stock: 120, unit: 'cups', minStock: 20, price: 60.0, costPrice: 30.0, barcode: '4792000205', category: 'Beverages'),
-        InventoryItem(name: 'Chocolate Gateau Slice', stock: 15, unit: 'pcs', minStock: 5, price: 350.0, costPrice: 280.0, barcode: '4792000206', category: 'Snacks'),
-        InventoryItem(name: 'Woodapple Juice', stock: 30, unit: 'pcs', minStock: 8, price: 200.0, costPrice: 140.0, barcode: '4792000207', category: 'Beverages'),
-      ]);
-    } else if (businessType == 'Restaurant & Hotel') {
-      defaults.addAll([
-        InventoryItem(name: 'Chicken Kottu (L)', stock: 35, unit: 'plates', minStock: 5, price: 850.0, costPrice: 650.0, barcode: '4793000301', category: 'Kottu'),
-        InventoryItem(name: 'Egg Kottu', stock: 40, unit: 'plates', minStock: 5, price: 650.0, costPrice: 480.0, barcode: '4793000302', category: 'Kottu'),
-        InventoryItem(name: 'Cheese Kottu', stock: 20, unit: 'plates', minStock: 5, price: 950.0, costPrice: 700.0, barcode: '4793000303', category: 'Kottu'),
-        InventoryItem(name: 'Chicken Fried Rice', stock: 50, unit: 'plates', minStock: 8, price: 800.0, costPrice: 600.0, barcode: '4793000304', category: 'Rice'),
-        InventoryItem(name: 'Seni Sambal Egg Hopper', stock: 80, unit: 'pcs', minStock: 15, price: 120.0, costPrice: 80.0, barcode: '4793000305', category: 'Hoppers'),
-        InventoryItem(name: 'Plain Hopper', stock: 150, unit: 'pcs', minStock: 25, price: 50.0, costPrice: 25.0, barcode: '4793000306', category: 'Hoppers'),
-        InventoryItem(name: 'Ginger Beer (EGB)', stock: 60, unit: 'bottles', minStock: 12, price: 180.0, costPrice: 130.0, barcode: '4793000307', category: 'Beverages'),
-      ]);
-    } else if (businessType == 'Service & Other') {
-      defaults.addAll([
-        InventoryItem(name: 'Standard Haircut', stock: 999, unit: 'sessions', minStock: 0, price: 700.0, costPrice: 150.0, barcode: '4794000401', category: 'Salon'),
-        InventoryItem(name: 'Beard Trim & Style', stock: 999, unit: 'sessions', minStock: 0, price: 400.0, costPrice: 100.0, barcode: '4794000402', category: 'Salon'),
-        InventoryItem(name: 'Full Vehicle Wash', stock: 100, unit: 'cars', minStock: 10, price: 2500.0, costPrice: 800.0, barcode: '4794000403', category: 'Car Care'),
-        InventoryItem(name: 'Interior Detailing', stock: 50, unit: 'cars', minStock: 5, price: 1500.0, costPrice: 500.0, barcode: '4794000404', category: 'Car Care'),
-        InventoryItem(name: 'General Consultation', stock: 999, unit: 'sessions', minStock: 0, price: 1000.0, costPrice: 0.0, barcode: '4794000405', category: 'General'),
-        InventoryItem(name: 'Urgent Device Repair', stock: 100, unit: 'repairs', minStock: 5, price: 3000.0, costPrice: 1200.0, barcode: '4794000406', category: 'General'),
-      ]);
-    } else {
-      defaults.addAll([
-        InventoryItem(name: 'Keeri Samba Rice 5kg', stock: 45, unit: 'Bags', minStock: 10, price: 1200.0, costPrice: 1050.0, barcode: '47920010012', category: 'Groceries'),
-        InventoryItem(name: 'Anchor Milk Powder 400g', stock: 3, unit: 'Boxes', minStock: 5, price: 1150.0, costPrice: 1020.0, barcode: '94100010022', category: 'Dairy'),
-        InventoryItem(name: 'Munchee Super Cream Cracker 190g', stock: 18, unit: 'Packs', minStock: 8, price: 250.0, costPrice: 210.0, barcode: '47910020001', category: 'Snacks'),
-        InventoryItem(name: 'Astra Margarine 250g', stock: 15, unit: 'tubs', minStock: 5, price: 550.0, costPrice: 480.0, barcode: '4791000103', category: 'Dairy'),
-        InventoryItem(name: 'White Sugar 1kg', stock: 200, unit: 'kg', minStock: 30, price: 240.0, costPrice: 210.0, barcode: '4791000102', category: 'Groceries'),
-        InventoryItem(name: 'Red Dhal 1kg', stock: 120, unit: 'kg', minStock: 20, price: 320.0, costPrice: 280.0, barcode: '4791000104', category: 'Groceries'),
-        InventoryItem(name: 'Dilmah Tea 100g', stock: 60, unit: 'boxes', minStock: 10, price: 450.0, costPrice: 380.0, barcode: '4791000105', category: 'Beverages'),
-        InventoryItem(name: 'Coconut Oil 1L', stock: 75, unit: 'bottles', minStock: 12, price: 680.0, costPrice: 590.0, barcode: '4791000106', category: 'Groceries'),
-      ]);
-    }
+  //   if (businessType == 'Cafe & Bakery') {
+  //     defaults.addAll([
+  //       InventoryItem(name: 'Egg Bun', stock: 50, unit: 'pcs', minStock: 10, price: 120.0, costPrice: 90.0, barcode: '4792000201', category: 'Short Eats'),
+  //       InventoryItem(name: 'Fish Pastry', stock: 40, unit: 'pcs', minStock: 10, price: 140.0, costPrice: 110.0, barcode: '4792000202', category: 'Short Eats'),
+  //       InventoryItem(name: 'Ulundu Vadai', stock: 60, unit: 'pcs', minStock: 15, price: 80.0, costPrice: 50.0, barcode: '4792000203', category: 'Short Eats'),
+  //       InventoryItem(name: 'Milk Coffee', stock: 100, unit: 'cups', minStock: 20, price: 150.0, costPrice: 90.0, barcode: '4792000204', category: 'Beverages'),
+  //       InventoryItem(name: 'Plain Tea', stock: 120, unit: 'cups', minStock: 20, price: 60.0, costPrice: 30.0, barcode: '4792000205', category: 'Beverages'),
+  //       InventoryItem(name: 'Chocolate Gateau Slice', stock: 15, unit: 'pcs', minStock: 5, price: 350.0, costPrice: 280.0, barcode: '4792000206', category: 'Snacks'),
+  //       InventoryItem(name: 'Woodapple Juice', stock: 30, unit: 'pcs', minStock: 8, price: 200.0, costPrice: 140.0, barcode: '4792000207', category: 'Beverages'),
+  //     ]);
+  //   } else if (businessType == 'Restaurant & Hotel') {
+  //     defaults.addAll([
+  //       InventoryItem(name: 'Chicken Kottu (L)', stock: 35, unit: 'plates', minStock: 5, price: 850.0, costPrice: 650.0, barcode: '4793000301', category: 'Kottu'),
+  //       InventoryItem(name: 'Egg Kottu', stock: 40, unit: 'plates', minStock: 5, price: 650.0, costPrice: 480.0, barcode: '4793000302', category: 'Kottu'),
+  //       InventoryItem(name: 'Cheese Kottu', stock: 20, unit: 'plates', minStock: 5, price: 950.0, costPrice: 700.0, barcode: '4793000303', category: 'Kottu'),
+  //       InventoryItem(name: 'Chicken Fried Rice', stock: 50, unit: 'plates', minStock: 8, price: 800.0, costPrice: 600.0, barcode: '4793000304', category: 'Rice'),
+  //       InventoryItem(name: 'Seni Sambal Egg Hopper', stock: 80, unit: 'pcs', minStock: 15, price: 120.0, costPrice: 80.0, barcode: '4793000305', category: 'Hoppers'),
+  //       InventoryItem(name: 'Plain Hopper', stock: 150, unit: 'pcs', minStock: 25, price: 50.0, costPrice: 25.0, barcode: '4793000306', category: 'Hoppers'),
+  //       InventoryItem(name: 'Ginger Beer (EGB)', stock: 60, unit: 'bottles', minStock: 12, price: 180.0, costPrice: 130.0, barcode: '4793000307', category: 'Beverages'),
+  //     ]);
+  //   } else if (businessType == 'Service & Other') {
+  //     defaults.addAll([
+  //       InventoryItem(name: 'Standard Haircut', stock: 999, unit: 'sessions', minStock: 0, price: 700.0, costPrice: 150.0, barcode: '4794000401', category: 'Salon'),
+  //       InventoryItem(name: 'Beard Trim & Style', stock: 999, unit: 'sessions', minStock: 0, price: 400.0, costPrice: 100.0, barcode: '4794000402', category: 'Salon'),
+  //       InventoryItem(name: 'Full Vehicle Wash', stock: 100, unit: 'cars', minStock: 10, price: 2500.0, costPrice: 800.0, barcode: '4794000403', category: 'Car Care'),
+  //       InventoryItem(name: 'Interior Detailing', stock: 50, unit: 'cars', minStock: 5, price: 1500.0, costPrice: 500.0, barcode: '4794000404', category: 'Car Care'),
+  //       InventoryItem(name: 'General Consultation', stock: 999, unit: 'sessions', minStock: 0, price: 1000.0, costPrice: 0.0, barcode: '4794000405', category: 'General'),
+  //       InventoryItem(name: 'Urgent Device Repair', stock: 100, unit: 'repairs', minStock: 5, price: 3000.0, costPrice: 1200.0, barcode: '4794000406', category: 'General'),
+  //     ]);
+  //   } else {
+  //     defaults.addAll([
+  //       InventoryItem(name: 'Keeri Samba Rice 5kg', stock: 45, unit: 'Bags', minStock: 10, price: 1200.0, costPrice: 1050.0, barcode: '47920010012', category: 'Groceries'),
+  //       InventoryItem(name: 'Anchor Milk Powder 400g', stock: 3, unit: 'Boxes', minStock: 5, price: 1150.0, costPrice: 1020.0, barcode: '94100010022', category: 'Dairy'),
+  //       InventoryItem(name: 'Munchee Super Cream Cracker 190g', stock: 18, unit: 'Packs', minStock: 8, price: 250.0, costPrice: 210.0, barcode: '47910020001', category: 'Snacks'),
+  //       InventoryItem(name: 'Astra Margarine 250g', stock: 15, unit: 'tubs', minStock: 5, price: 550.0, costPrice: 480.0, barcode: '4791000103', category: 'Dairy'),
+  //       InventoryItem(name: 'White Sugar 1kg', stock: 200, unit: 'kg', minStock: 30, price: 240.0, costPrice: 210.0, barcode: '4791000102', category: 'Groceries'),
+  //       InventoryItem(name: 'Red Dhal 1kg', stock: 120, unit: 'kg', minStock: 20, price: 320.0, costPrice: 280.0, barcode: '4791000104', category: 'Groceries'),
+  //       InventoryItem(name: 'Dilmah Tea 100g', stock: 60, unit: 'boxes', minStock: 10, price: 450.0, costPrice: 380.0, barcode: '4791000105', category: 'Beverages'),
+  //       InventoryItem(name: 'Coconut Oil 1L', stock: 75, unit: 'bottles', minStock: 12, price: 680.0, costPrice: 590.0, barcode: '4791000106', category: 'Groceries'),
+  //     ]);
+  //   }
 
-    for (var item in defaults) {
-      await db.insert('inventory', item.toMap());
-    }
-  }
+  //   for (var item in defaults) {
+  //     await db.insert('inventory', item.toMap());
+  //   }
+  // }
 
   // --- Credit Accounts (Debtors) operations ---
   Future<List<CreditAccount>> getCreditAccounts() async {
@@ -336,42 +361,42 @@ class DatabaseService {
     return await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<void> populateDefaultNaya() async {
-    final db = await database;
-    await db.delete('credit_accounts');
-    await db.delete('supplier_ledger');
-    await db.delete('expenses');
+  // Future<void> populateDefaultNaya() async {
+  //   final db = await database;
+  //   await db.delete('credit_accounts');
+  //   await db.delete('supplier_ledger');
+  //   await db.delete('expenses');
 
-    final debtors = [
-      CreditAccount(name: 'Nimal Perera', phone: '0771234567', balance: 12400.0, lastUpdated: DateTime.now().subtract(const Duration(days: 2))),
-      CreditAccount(name: 'Saman Kumara', phone: '0719876543', balance: 3200.0, lastUpdated: DateTime.now()),
-      CreditAccount(name: 'Pathum Bandara', phone: '0725556666', balance: 4500.0, lastUpdated: DateTime.now().subtract(const Duration(days: 3))),
-    ];
+  //   final debtors = [
+  //     CreditAccount(name: 'Nimal Perera', phone: '0771234567', balance: 12400.0, lastUpdated: DateTime.now().subtract(const Duration(days: 2))),
+  //     CreditAccount(name: 'Saman Kumara', phone: '0719876543', balance: 3200.0, lastUpdated: DateTime.now()),
+  //     CreditAccount(name: 'Pathum Bandara', phone: '0725556666', balance: 4500.0, lastUpdated: DateTime.now().subtract(const Duration(days: 3))),
+  //   ];
 
-    for (var debtor in debtors) {
-      await db.insert('credit_accounts', debtor.toMap());
-    }
+  //   for (var debtor in debtors) {
+  //     await db.insert('credit_accounts', debtor.toMap());
+  //   }
 
-    final suppliers = [
-      SupplierAccount(name: 'Cargills Foods', phone: '0112345678', balance: 35000.0, dueDate: DateTime.now().add(const Duration(days: 3)), lastUpdated: DateTime.now().subtract(const Duration(days: 1))),
-      SupplierAccount(name: 'Unilever Ceylon', phone: '0119876543', balance: 18500.0, dueDate: DateTime.now().add(const Duration(days: 7)), lastUpdated: DateTime.now().subtract(const Duration(days: 2))),
-      SupplierAccount(name: 'Local Veggie Wholesale', phone: '0779998888', balance: 5000.0, dueDate: DateTime.now().add(const Duration(days: 1)), lastUpdated: DateTime.now()),
-    ];
+  //   final suppliers = [
+  //     SupplierAccount(name: 'Cargills Foods', phone: '0112345678', balance: 35000.0, dueDate: DateTime.now().add(const Duration(days: 3)), lastUpdated: DateTime.now().subtract(const Duration(days: 1))),
+  //     SupplierAccount(name: 'Unilever Ceylon', phone: '0119876543', balance: 18500.0, dueDate: DateTime.now().add(const Duration(days: 7)), lastUpdated: DateTime.now().subtract(const Duration(days: 2))),
+  //     SupplierAccount(name: 'Local Veggie Wholesale', phone: '0779998888', balance: 5000.0, dueDate: DateTime.now().add(const Duration(days: 1)), lastUpdated: DateTime.now()),
+  //   ];
 
-    for (var supplier in suppliers) {
-      await db.insert('supplier_ledger', supplier.toMap());
-    }
+  //   for (var supplier in suppliers) {
+  //     await db.insert('supplier_ledger', supplier.toMap());
+  //   }
 
-    final expensesList = [
-      Expense(category: 'Rent', amount: 30000.0, note: 'Shop rent for August', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 1)),
-      Expense(category: 'Bills', amount: 12000.0, note: 'CEB Electricity bill payment', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 5)),
-      Expense(category: 'Wages', amount: 25000.0, note: 'Assistant helper cashier salary', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 10)),
-    ];
+  //   final expensesList = [
+  //     Expense(category: 'Rent', amount: 30000.0, note: 'Shop rent for August', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 1)),
+  //     Expense(category: 'Bills', amount: 12000.0, note: 'CEB Electricity bill payment', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 5)),
+  //     Expense(category: 'Wages', amount: 25000.0, note: 'Assistant helper cashier salary', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 10)),
+  //   ];
 
-    for (var exp in expensesList) {
-      await db.insert('expenses', exp.toMap());
-    }
-  }
+  //   for (var exp in expensesList) {
+  //     await db.insert('expenses', exp.toMap());
+  //   }
+  // }
 
   // --- Sales operations ---
   Future<int> insertSale(Sale sale) async {
@@ -382,10 +407,29 @@ class DatabaseService {
       for (var item in sale.items) {
         await txn.insert('sale_items', item.toMap(saleId));
         
-        await txn.execute(
-          'UPDATE inventory SET stock = MAX(0, stock - ?) WHERE name = ?',
-          [item.quantity, item.name],
-        );
+        // Check if this product has a recipe
+        final List<Map<String, dynamic>> recipeItems = await txn.rawQuery('''
+          SELECT ingredientId, quantity FROM recipes WHERE productId = (
+            SELECT id FROM inventory WHERE name = ? LIMIT 1
+          )
+        ''', [item.name]);
+
+        if (recipeItems.isNotEmpty) {
+          // If a recipe is found, deduct the raw ingredients instead
+          for (var recipeItem in recipeItems) {
+            final double quantityToDeduct = item.quantity * (recipeItem['quantity'] as num).toDouble();
+            await txn.execute(
+              'UPDATE inventory SET stock = MAX(0, stock - ?) WHERE id = ?',
+              [quantityToDeduct, recipeItem['ingredientId']],
+            );
+          }
+        } else {
+          // Default fallback: deduct the sellable product's own stock
+          await txn.execute(
+            'UPDATE inventory SET stock = MAX(0, stock - ?) WHERE name = ?',
+            [item.quantity, item.name],
+          );
+        }
       }
 
       if (sale.paymentMethod == 'Naya Potha' && sale.customerName != null) {
@@ -443,6 +487,31 @@ class DatabaseService {
     return sales;
   }
 
+  // --- Recipe Operations (Version 7) ---
+  Future<List<Map<String, dynamic>>> getRecipeForProduct(int productId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT r.id, r.productId, r.ingredientId, r.quantity, i.name, i.unit, i.stock
+      FROM recipes r
+      JOIN inventory i ON r.ingredientId = i.id
+      WHERE r.productId = ?
+    ''', [productId]);
+  }
+
+  Future<void> saveRecipe(int productId, List<Map<String, dynamic>> ingredients) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('recipes', where: 'productId = ?', whereArgs: [productId]);
+      for (var ing in ingredients) {
+        await txn.insert('recipes', {
+          'productId': productId,
+          'ingredientId': ing['ingredientId'],
+          'quantity': ing['quantity'],
+        });
+      }
+    });
+  }
+
   Future<void> clearDatabase() async {
     final db = await database;
     await db.delete('business_config');
@@ -452,5 +521,6 @@ class DatabaseService {
     await db.delete('credit_accounts');
     await db.delete('supplier_ledger');
     await db.delete('expenses');
+    await db.delete('recipes');
   }
 }

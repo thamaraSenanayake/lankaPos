@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/inventory_item.dart';
 import '../../viewmodels/inventory_viewmodel.dart';
 import 'mock_scanner_dialog.dart';
+import 'recipe_composer_dialog.dart';
 
 class AddEditProductDialog extends StatefulWidget {
   final InventoryViewModel inventoryViewModel;
@@ -168,6 +169,26 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                   ),
                 ],
               ),
+              if (isEdit) ...[
+                const Divider(color: Color(0xFF334155), height: 32),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    foregroundColor: const Color(0xFF10B981),
+                    side: const BorderSide(color: Color(0xFF10B981), width: 0.5),
+                    minimumSize: const Size.fromHeight(44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.receipt_long, size: 16),
+                  label: const Text('LINK INGREDIENTS (RECIPE) 🥗', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (c) => RecipeComposerDialog(product: widget.existingProduct!),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),

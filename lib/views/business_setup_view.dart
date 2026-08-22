@@ -29,6 +29,16 @@ class _BusinessSetupViewState extends ConsumerState<BusinessSetupView> {
     _nameController = TextEditingController(text: config.shopName);
     _addressController = TextEditingController(text: config.address);
     _phoneController = TextEditingController(text: config.phoneNumber);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(businessSetupProvider.notifier).loadSavedConfig();
+      final savedConfig = ref.read(businessSetupProvider);
+      if (mounted) {
+        _nameController.text = savedConfig.shopName;
+        _addressController.text = savedConfig.address;
+        _phoneController.text = savedConfig.phoneNumber;
+      }
+    });
   }
 
   @override

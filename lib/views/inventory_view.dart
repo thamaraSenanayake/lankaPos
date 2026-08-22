@@ -23,23 +23,25 @@ class InventoryView extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Inventory & Stock Control 📦',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFF8FAFC),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Inventory & Stock Control 📦',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFF8FAFC),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Manage items, barcode lookups, and cost allocations.',
-                    style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF)),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      'Manage items, barcode lookups, and cost allocations.',
+                      style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFFBBCABF)),
+                    ),
+                  ],
+                ),
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
@@ -163,6 +165,7 @@ class InventoryView extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final item = filteredList[index];
                     final isLow = item.stock <= item.minStock;
+                    final hasRecipe = state.recipes.containsKey(item.id);
 
                     return Card(
                       color: const Color(0xFF1E293B),
@@ -201,11 +204,30 @@ class InventoryView extends ConsumerWidget {
                         title: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.name,
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item.name,
+                                    style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (hasRecipe)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    margin: const EdgeInsets.only(left: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Recipe 🥗',
+                                      style: GoogleFonts.inter(color: const Color(0xFF10B981), fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 2),
                             Row(
