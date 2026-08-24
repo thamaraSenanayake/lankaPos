@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
 import '../viewmodels/business_health_viewmodel.dart';
+import '../widgets/custom_text_field.dart';
 
 class BusinessHealthView extends ConsumerWidget {
   const BusinessHealthView({super.key});
@@ -539,35 +540,19 @@ class BusinessHealthView extends ConsumerWidget {
                       const SizedBox(height: 12),
 
                       // Amount
-                      Text('AMOUNT (LKR)', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                      const SizedBox(height: 6),
-                      TextField(
+                      CustomTextField(
+                        label: 'Amount (LKR)',
+                        placeholder: 'e.g. 15000',
                         controller: amountController,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'e.g. 15000',
-                          filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                        ),
                       ),
                       const SizedBox(height: 12),
 
                       // Notes
-                      Text('NOTES / MEMO', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                      const SizedBox(height: 6),
-                      TextField(
+                      CustomTextField(
+                        label: 'Notes / Memo',
+                        placeholder: 'e.g. CEB Electricity bill August',
                         controller: noteController,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'e.g. CEB Electricity bill August',
-                          filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                        ),
                       ),
                       const SizedBox(height: 16),
 

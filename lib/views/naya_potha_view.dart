@@ -6,6 +6,7 @@ import '../models/credit_account.dart';
 import '../models/supplier_account.dart';
 import '../viewmodels/naya_potha_viewmodel.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
+import '../widgets/custom_text_field.dart';
 
 class NayaPothaView extends ConsumerWidget {
   const NayaPothaView({super.key});
@@ -479,19 +480,12 @@ class NayaPothaView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Enter collected amount from ${debtor.name}:', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF))),
-              const SizedBox(height: 12),
-              TextField(
+              const SizedBox(height: 16),
+              CustomTextField(
+                label: 'Payment Amount (LKR)',
+                placeholder: 'e.g. 1000',
                 controller: controller,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 1000',
-                  prefixText: 'LKR ',
-                  prefixStyle: const TextStyle(color: Colors.white),
-                  filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
               ),
             ],
           ),
@@ -533,19 +527,12 @@ class NayaPothaView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Enter paid invoice amount to ${supplier.name}:', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF))),
-              const SizedBox(height: 12),
-              TextField(
+              const SizedBox(height: 16),
+              CustomTextField(
+                label: 'Settlement Amount (LKR)',
+                placeholder: 'e.g. 5000',
                 controller: controller,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 5000',
-                  prefixText: 'LKR ',
-                  prefixStyle: const TextStyle(color: Colors.white),
-                  filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
               ),
             ],
           ),
@@ -642,21 +629,24 @@ class NayaPothaView extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              CustomTextField(
+                label: 'Customer Name',
+                placeholder: 'e.g. Kamal Perera',
                 controller: nameCont,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(hintText: 'Customer Name', hintStyle: TextStyle(color: Colors.white30)),
               ),
-              TextField(
+              const SizedBox(height: 12),
+              CustomTextField(
+                label: 'Phone Number',
+                placeholder: 'e.g. 0771234567',
                 controller: phoneCont,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(hintText: 'Phone Number', hintStyle: TextStyle(color: Colors.white30)),
+                keyboardType: TextInputType.phone,
               ),
-              TextField(
+              const SizedBox(height: 12),
+              CustomTextField(
+                label: 'Initial Debt (LKR)',
+                placeholder: 'e.g. 1500',
                 controller: balCont,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(hintText: 'Initial Debt (LKR)', hintStyle: TextStyle(color: Colors.white30)),
               ),
             ],
           ),
@@ -694,21 +684,24 @@ class NayaPothaView extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              CustomTextField(
+                label: 'Supplier Name',
+                placeholder: 'e.g. Cargills Foods',
                 controller: nameCont,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(hintText: 'Supplier / Distributor Name', hintStyle: TextStyle(color: Colors.white30)),
               ),
-              TextField(
+              const SizedBox(height: 12),
+              CustomTextField(
+                label: 'Contact Phone',
+                placeholder: 'e.g. 0112345678',
                 controller: phoneCont,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(hintText: 'Contact Phone', hintStyle: TextStyle(color: Colors.white30)),
+                keyboardType: TextInputType.phone,
               ),
-              TextField(
+              const SizedBox(height: 12),
+              CustomTextField(
+                label: 'Invoice Due (LKR)',
+                placeholder: 'e.g. 25000',
                 controller: balCont,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(hintText: 'Invoice Due (LKR)', hintStyle: TextStyle(color: Colors.white30)),
               ),
             ],
           ),

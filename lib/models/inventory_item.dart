@@ -8,6 +8,7 @@ class InventoryItem {
   final String barcode;
   final String category;
   final double costPrice;
+  final String stockType; // 'General', 'Ingredients', 'Products'
 
   InventoryItem({
     this.id,
@@ -19,6 +20,7 @@ class InventoryItem {
     this.barcode = '',
     this.category = 'General',
     this.costPrice = 0.0,
+    this.stockType = 'General',
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +34,7 @@ class InventoryItem {
       'barcode': barcode,
       'category': category,
       'costPrice': costPrice,
+      'stockType': stockType,
     };
   }
 
@@ -46,6 +49,7 @@ class InventoryItem {
       barcode: map['barcode'] ?? '',
       category: map['category'] ?? 'General',
       costPrice: (map['costPrice'] as num?)?.toDouble() ?? 0.0,
+      stockType: map['stockType'] ?? 'General',
     );
   }
 
@@ -59,6 +63,7 @@ class InventoryItem {
     String? barcode,
     String? category,
     double? costPrice,
+    String? stockType,
   }) {
     return InventoryItem(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class InventoryItem {
       barcode: barcode ?? this.barcode,
       category: category ?? this.category,
       costPrice: costPrice ?? this.costPrice,
+      stockType: stockType ?? this.stockType,
     );
   }
 }

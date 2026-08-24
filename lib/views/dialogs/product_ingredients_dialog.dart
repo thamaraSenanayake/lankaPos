@@ -5,33 +5,33 @@ import '../../models/inventory_item.dart';
 import '../../services/database_service.dart';
 import '../../viewmodels/inventory_viewmodel.dart';
 
-class RecipeComposerDialog extends ConsumerStatefulWidget {
+class ProductIngredientsDialog extends ConsumerStatefulWidget {
   final InventoryItem product;
 
-  const RecipeComposerDialog({
+  const ProductIngredientsDialog({
     super.key,
     required this.product,
   });
 
   @override
-  ConsumerState<RecipeComposerDialog> createState() => _RecipeComposerDialogState();
+  ConsumerState<ProductIngredientsDialog> createState() => _ProductIngredientsDialogState();
 }
 
-class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
+class _ProductIngredientsDialogState extends ConsumerState<ProductIngredientsDialog> {
   final List<Map<String, dynamic>> _ingredientsList = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadRecipe();
+    _loadIngredients();
   }
 
-  Future<void> _loadRecipe() async {
+  Future<void> _loadIngredients() async {
     try {
-      final recipe = await DatabaseService.instance.getRecipeForProduct(widget.product.id!);
+      final list = await DatabaseService.instance.getProductIngredients(widget.product.id!);
       setState(() {
-        for (var row in recipe) {
+        for (var row in list) {
           _ingredientsList.add({
             'ingredientId': row['ingredientId'] as int,
             'quantity': (row['quantity'] as num).toDouble(),
@@ -44,10 +44,9 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
     }
   }
 
-  void _addIngredientRow(List<InventoryItem> allItems) {
-    // Find first ingredient not already added
+  void _addIngredientRow(List<InventoryItem> availableOptions) {
     final addedIds = _ingredientsList.map((row) => row['ingredientId'] as int).toSet();
-    final available = allItems.where((item) => item.id != widget.product.id && !addedIds.contains(item.id)).toList();
+    final available = availableOptions.where((item) => !addedIds.contains(item.id)).toList();
 
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,8 +69,7 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
     });
   }
 
-  Future<void> _saveRecipe() async {
-    // Validate rows
+  Future<void> _saveIngredients() async {
     for (var row in _ingredientsList) {
       if (row['ingredientId'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,19 +88,19 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
 
     setState(() => _isLoading = true);
     try {
-      await DatabaseService.instance.saveRecipe(widget.product.id!, _ingredientsList);
+      await DatabaseService.instance.saveProductIngredients(widget.product.id!, _ingredientsList);
       await ref.read(inventoryProvider.notifier).loadInventory();
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Recipe ingredients linked successfully!'), backgroundColor: Color(0xFF10B981)),
+          const SnackBar(content: Text('Product ingredients linked successfully!'), backgroundColor: Color(0xFF10B981)),
         );
       }
     } catch (_) {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save recipe.'), backgroundColor: Colors.redAccent),
+          const SnackBar(content: Text('Failed to save ingredients.'), backgroundColor: Colors.redAccent),
         );
       }
     }
@@ -113,8 +111,8 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
     final invState = ref.watch(inventoryProvider);
     final allItems = invState.inventory;
     
-    // Filter out the product itself from ingredient options
-    final ingredientOptions = allItems.where((item) => item.id != widget.product.id).toList();
+    // Filter options to only show items marked as 'Ingredients'
+    final ingredientOptions = allItems.where((item) => item.stockType == 'Ingredients').toList();
 
     return AlertDialog(
       backgroundColor: const Color(0xFF1E293B),
@@ -123,7 +121,7 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
         side: const BorderSide(color: Color(0xFF334155)),
       ),
       title: Text(
-        'Recipe Ingredients: ${widget.product.name}',
+        'Ingredients for: ${widget.product.name}',
         style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
       ),
       content: SizedBox(
@@ -153,7 +151,6 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
                               final selectedIngId = row['ingredientId'] as int;
                               final quantity = row['quantity'] as double;
                               
-                              // Find selected item to get unit
                               final selectedItem = allItems.firstWhere(
                                 (item) => item.id == selectedIngId,
                                 orElse: () => InventoryItem(name: 'Unknown', stock: 0, unit: '', minStock: 0, price: 0, costPrice: 0),
@@ -263,8 +260,8 @@ class _RecipeComposerDialogState extends ConsumerState<RecipeComposerDialog> {
             foregroundColor: const Color(0xFF0F172A),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          onPressed: _saveRecipe,
-          child: const Text('SAVE RECIPE', style: TextStyle(fontWeight: FontWeight.bold)),
+          onPressed: _saveIngredients,
+          child: const Text('SAVE INGREDIENTS', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
     );

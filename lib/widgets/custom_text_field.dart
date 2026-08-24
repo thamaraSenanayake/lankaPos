@@ -8,6 +8,11 @@ class CustomTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
+  final String? suffixText;
+  final int maxLines;
+  final bool obscureText;
+  final int? maxLength;
+  final TextStyle? style;
 
   const CustomTextField({
     super.key,
@@ -17,6 +22,11 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.validator,
     this.prefixIcon,
+    this.suffixText,
+    this.maxLines = 1,
+    this.obscureText = false,
+    this.maxLength,
+    this.style,
   });
 
   @override
@@ -39,7 +49,10 @@ class CustomTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           validator: validator,
-          style: GoogleFonts.inter(
+          maxLines: maxLines,
+          obscureText: obscureText,
+          maxLength: maxLength,
+          style: style ?? GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: const Color(0xFFF8FAFC),
@@ -58,6 +71,8 @@ class CustomTextField extends StatelessWidget {
                     color: const Color(0xFFBBCABF).withOpacity(0.6),
                   )
                 : null,
+            suffixText: suffixText,
+            suffixStyle: const TextStyle(color: Colors.white, fontSize: 13),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,

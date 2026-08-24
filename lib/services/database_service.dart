@@ -25,7 +25,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -87,7 +87,8 @@ class DatabaseService {
         price REAL NOT NULL,
         barcode TEXT NOT NULL DEFAULT '',
         category TEXT NOT NULL DEFAULT 'General',
-        costPrice REAL NOT NULL DEFAULT 0.0
+        costPrice REAL NOT NULL DEFAULT 0.0,
+        stockType TEXT NOT NULL DEFAULT 'General'
       )
     ''');
 
@@ -126,9 +127,9 @@ class DatabaseService {
       )
     ''');
 
-    // Create Recipes Table (Version 7)
+    // Create Product Ingredients Table (Version 8)
     await db.execute('''
-      CREATE TABLE recipes (
+      CREATE TABLE product_ingredients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         productId INTEGER NOT NULL,
         ingredientId INTEGER NOT NULL,
@@ -154,6 +155,23 @@ class DatabaseService {
       await db.execute('DROP TABLE IF EXISTS recipes');
       await db.execute('''
         CREATE TABLE recipes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          productId INTEGER NOT NULL,
+          ingredientId INTEGER NOT NULL,
+          quantity REAL NOT NULL,
+          FOREIGN KEY (productId) REFERENCES inventory (id) ON DELETE CASCADE,
+          FOREIGN KEY (ingredientId) REFERENCES inventory (id) ON DELETE CASCADE
+        )
+      ''');
+    }
+    if (oldVersion < 8) {
+      await db.execute('DROP TABLE IF EXISTS recipes');
+      await db.execute('DROP TABLE IF EXISTS product_ingredients');
+      try {
+        await db.execute("ALTER TABLE inventory ADD COLUMN stockType TEXT NOT NULL DEFAULT 'General'");
+      } catch (_) {}
+      await db.execute('''
+        CREATE TABLE product_ingredients (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           productId INTEGER NOT NULL,
           ingredientId INTEGER NOT NULL,
@@ -407,16 +425,16 @@ class DatabaseService {
       for (var item in sale.items) {
         await txn.insert('sale_items', item.toMap(saleId));
         
-        // Check if this product has a recipe
-        final List<Map<String, dynamic>> recipeItems = await txn.rawQuery('''
-          SELECT ingredientId, quantity FROM recipes WHERE productId = (
+        // Check if this product has linked ingredients
+        final List<Map<String, dynamic>> ingredientItems = await txn.rawQuery('''
+          SELECT ingredientId, quantity FROM product_ingredients WHERE productId = (
             SELECT id FROM inventory WHERE name = ? LIMIT 1
           )
         ''', [item.name]);
 
-        if (recipeItems.isNotEmpty) {
-          // If a recipe is found, deduct the raw ingredients instead
-          for (var recipeItem in recipeItems) {
+        if (ingredientItems.isNotEmpty) {
+          // If linked ingredients are found, deduct them instead
+          for (var recipeItem in ingredientItems) {
             final double quantityToDeduct = item.quantity * (recipeItem['quantity'] as num).toDouble();
             await txn.execute(
               'UPDATE inventory SET stock = MAX(0, stock - ?) WHERE id = ?',
@@ -487,23 +505,23 @@ class DatabaseService {
     return sales;
   }
 
-  // --- Recipe Operations (Version 7) ---
-  Future<List<Map<String, dynamic>>> getRecipeForProduct(int productId) async {
+  // --- Product Ingredients Operations (Version 8) ---
+  Future<List<Map<String, dynamic>>> getProductIngredients(int productId) async {
     final db = await database;
     return await db.rawQuery('''
       SELECT r.id, r.productId, r.ingredientId, r.quantity, i.name, i.unit, i.stock
-      FROM recipes r
+      FROM product_ingredients r
       JOIN inventory i ON r.ingredientId = i.id
       WHERE r.productId = ?
     ''', [productId]);
   }
 
-  Future<void> saveRecipe(int productId, List<Map<String, dynamic>> ingredients) async {
+  Future<void> saveProductIngredients(int productId, List<Map<String, dynamic>> ingredients) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete('recipes', where: 'productId = ?', whereArgs: [productId]);
+      await txn.delete('product_ingredients', where: 'productId = ?', whereArgs: [productId]);
       for (var ing in ingredients) {
-        await txn.insert('recipes', {
+        await txn.insert('product_ingredients', {
           'productId': productId,
           'ingredientId': ing['ingredientId'],
           'quantity': ing['quantity'],
@@ -521,6 +539,6 @@ class DatabaseService {
     await db.delete('credit_accounts');
     await db.delete('supplier_ledger');
     await db.delete('expenses');
-    await db.delete('recipes');
+    await db.delete('product_ingredients');
   }
 }

@@ -113,7 +113,9 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
   }
 
   List<ProductItem> _mapInventoryToProducts(List<InventoryItem> items) {
-    return items.map((item) {
+    return items
+        .where((item) => item.stockType != 'Ingredients')
+        .map((item) {
       return ProductItem(
         name: item.name,
         price: item.price,

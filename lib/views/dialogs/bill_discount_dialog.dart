@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../viewmodels/dashboard_viewmodel.dart';
+import '../../widgets/custom_text_field.dart';
 
 class BillDiscountDialog extends StatelessWidget {
   final DashboardState state;
@@ -30,19 +31,13 @@ class BillDiscountDialog extends StatelessWidget {
             'Enter overall checkout bill discount (0-100%):',
             style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF)),
           ),
-          const SizedBox(height: 12),
-          TextField(
+          const SizedBox(height: 16),
+          CustomTextField(
+            label: 'Discount Rate',
+            placeholder: 'e.g. 5',
             controller: controller,
             keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'e.g. 5',
-              suffixText: '%',
-              suffixStyle: const TextStyle(color: Colors.white),
-              filled: true,
-              fillColor: const Color(0xFF0F172A),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+            suffixText: '%',
           ),
         ],
       ),

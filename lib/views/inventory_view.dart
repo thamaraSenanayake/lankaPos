@@ -56,9 +56,10 @@ class InventoryView extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 onPressed: () {
-                  showDialog(
+                  showModalBottomSheet(
                     context: context,
-                    barrierDismissible: false,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
                     builder: (c) => AddEditProductDialog(inventoryViewModel: viewModel),
                   );
                 },
@@ -165,7 +166,23 @@ class InventoryView extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final item = filteredList[index];
                     final isLow = item.stock <= item.minStock;
-                    final hasRecipe = state.recipes.containsKey(item.id);
+                    final hasIngredients = state.ingredients.containsKey(item.id);
+
+                    Color stockTypeColor;
+                    String stockTypeLabel;
+                    switch (item.stockType) {
+                      case 'Ingredients':
+                        stockTypeColor = Colors.orangeAccent;
+                        stockTypeLabel = 'Ingredient 🌾';
+                        break;
+                      case 'Products':
+                        stockTypeColor = const Color(0xFF10B981);
+                        stockTypeLabel = 'Product 🍔';
+                        break;
+                      default:
+                        stockTypeColor = const Color(0xFF3B82F6);
+                        stockTypeLabel = 'General 📦';
+                    }
 
                     return Card(
                       color: const Color(0xFF1E293B),
@@ -179,9 +196,10 @@ class InventoryView extends ConsumerWidget {
                       ),
                       child: ListTile(
                         onTap: () {
-                          showDialog(
+                          showModalBottomSheet(
                             context: context,
-                            barrierDismissible: false,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
                             builder: (c) => AddEditProductDialog(
                               inventoryViewModel: viewModel,
                               existingProduct: item,
@@ -214,16 +232,30 @@ class InventoryView extends ConsumerWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                if (hasRecipe)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  margin: const EdgeInsets.only(left: 6),
+                                  decoration: BoxDecoration(
+                                    color: stockTypeColor.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: stockTypeColor, width: 0.5),
+                                  ),
+                                  child: Text(
+                                    stockTypeLabel,
+                                    style: GoogleFonts.inter(color: stockTypeColor, fontSize: 9, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                if (item.stockType == 'Products' && hasIngredients)
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     margin: const EdgeInsets.only(left: 6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981).withOpacity(0.2),
+                                      color: const Color(0xFF10B981).withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: const Color(0xFF10B981), width: 0.5),
                                     ),
                                     child: Text(
-                                      'Recipe 🥗',
+                                      'Ingredients Linked 🥗',
                                       style: GoogleFonts.inter(color: const Color(0xFF10B981), fontSize: 9, fontWeight: FontWeight.bold),
                                     ),
                                   ),

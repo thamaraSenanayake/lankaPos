@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/sale.dart';
 import '../../viewmodels/dashboard_viewmodel.dart';
+import '../../widgets/custom_text_field.dart';
 
 class PaymentDrawerDialog extends StatefulWidget {
   final DashboardState state;
@@ -66,22 +67,10 @@ class _PaymentDrawerDialogState extends State<PaymentDrawerDialog> {
 
           if (selectedMethod == 'Naya Potha') ...[
             const SizedBox(height: 16),
-            Text(
-              'CUSTOMER DETAILS',
-              style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF)),
-            ),
-            const SizedBox(height: 6),
-            TextField(
+            CustomTextField(
+              label: 'Customer Details',
+              placeholder: "Enter customer's full name",
               controller: customerController,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: "Enter customer's full name",
-                hintStyle: GoogleFonts.inter(color: const Color(0xFFBBCABF).withOpacity(0.4), fontSize: 12),
-                filled: true,
-                fillColor: const Color(0xFF0F172A),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-              ),
             ),
           ],
 

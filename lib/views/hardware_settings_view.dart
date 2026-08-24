@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
+import '../widgets/custom_text_field.dart';
 
 class HardwareSettingsView extends ConsumerStatefulWidget {
   const HardwareSettingsView({super.key});
@@ -193,63 +194,35 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
                 const SizedBox(height: 12),
 
                 // Shop Name
-                Text('SHOP NAME', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                const SizedBox(height: 6),
-                TextField(
+                CustomTextField(
+                  label: 'Shop Name',
+                  placeholder: 'e.g. LankaPOS Café',
                   controller: nameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
                 ),
                 const SizedBox(height: 12),
 
                 // Address
-                Text('ADDRESS', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                const SizedBox(height: 6),
-                TextField(
+                CustomTextField(
+                  label: 'Address',
+                  placeholder: 'e.g. Galle Road, Colombo',
                   controller: addrController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
                 ),
                 const SizedBox(height: 12),
 
                 // Phone
-                Text('TELEPHONE', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                const SizedBox(height: 6),
-                TextField(
+                CustomTextField(
+                  label: 'Telephone',
+                  placeholder: 'e.g. +94 11 234 5678',
                   controller: phoneController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
                 ),
                 const SizedBox(height: 12),
 
                 // Footer message
-                Text('RECEIPT FOOTER MESSAGE', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                const SizedBox(height: 6),
-                TextField(
+                CustomTextField(
+                  label: 'Receipt Footer Message',
+                  placeholder: 'e.g. Thank You Come Again',
                   controller: footerController,
                   maxLines: 2,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
                 ),
               ],
             ),

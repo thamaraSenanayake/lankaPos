@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/sale.dart';
 import '../../viewmodels/dashboard_viewmodel.dart';
+import '../../widgets/custom_text_field.dart';
 
 class ItemDiscountDialog extends StatelessWidget {
   final SaleItem item;
@@ -31,19 +32,13 @@ class ItemDiscountDialog extends StatelessWidget {
             'Enter discount percentage (0-100%) for ${item.name}:',
             style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF)),
           ),
-          const SizedBox(height: 12),
-          TextField(
+          const SizedBox(height: 16),
+          CustomTextField(
+            label: 'Discount Rate',
+            placeholder: 'e.g. 10',
             controller: controller,
             keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'e.g. 10',
-              suffixText: '%',
-              suffixStyle: const TextStyle(color: Colors.white),
-              filled: true,
-              fillColor: const Color(0xFF0F172A),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
+            suffixText: '%',
           ),
         ],
       ),

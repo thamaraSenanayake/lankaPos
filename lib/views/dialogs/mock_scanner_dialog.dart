@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../viewmodels/dashboard_viewmodel.dart';
 import '../../viewmodels/inventory_viewmodel.dart';
+import '../../widgets/custom_text_field.dart';
 
 class MockScannerDialog extends ConsumerWidget {
   final void Function(String)? onScanned;
@@ -80,25 +81,10 @@ class MockScannerDialog extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Manual Input
-            Text(
-              'MANUAL BARCODE LOOKUP',
-              style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF)),
-            ),
-            const SizedBox(height: 6),
-            TextField(
+            CustomTextField(
+              label: 'Manual Barcode Lookup',
+              placeholder: 'e.g. 94100010022',
               controller: textController,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'e.g. 94100010022',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFFBBCABF).withOpacity(0.4), fontSize: 12),
-                filled: true,
-                fillColor: const Color(0xFF1E293B),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: Color(0xFF475569)),
-                ),
-              ),
             ),
             const SizedBox(height: 10),
 

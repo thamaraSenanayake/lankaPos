@@ -4,14 +4,14 @@ import '../services/database_service.dart';
 
 class InventoryState {
   final List<InventoryItem> inventory;
-  final Map<int, List<Map<String, dynamic>>> recipes;
+  final Map<int, List<Map<String, dynamic>>> ingredients;
   final String selectedCategoryFilter;
   final bool lowStockOnlyFilter;
   final String searchKeyword;
 
   InventoryState({
     this.inventory = const [],
-    this.recipes = const {},
+    this.ingredients = const {},
     this.selectedCategoryFilter = 'All Categories',
     this.lowStockOnlyFilter = false,
     this.searchKeyword = '',
@@ -19,14 +19,14 @@ class InventoryState {
 
   InventoryState copyWith({
     List<InventoryItem>? inventory,
-    Map<int, List<Map<String, dynamic>>>? recipes,
+    Map<int, List<Map<String, dynamic>>>? ingredients,
     String? selectedCategoryFilter,
     bool? lowStockOnlyFilter,
     String? searchKeyword,
   }) {
     return InventoryState(
       inventory: inventory ?? this.inventory,
-      recipes: recipes ?? this.recipes,
+      ingredients: ingredients ?? this.ingredients,
       selectedCategoryFilter: selectedCategoryFilter ?? this.selectedCategoryFilter,
       lowStockOnlyFilter: lowStockOnlyFilter ?? this.lowStockOnlyFilter,
       searchKeyword: searchKeyword ?? this.searchKeyword,
@@ -43,16 +43,16 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
 
   Future<void> loadInventory() async {
     final list = await _dbService.getInventory();
-    final Map<int, List<Map<String, dynamic>>> recipeMap = {};
+    final Map<int, List<Map<String, dynamic>>> ingredientMap = {};
     for (var item in list) {
       if (item.id != null) {
-        final recipe = await _dbService.getRecipeForProduct(item.id!);
-        if (recipe.isNotEmpty) {
-          recipeMap[item.id!] = recipe;
+        final ing = await _dbService.getProductIngredients(item.id!);
+        if (ing.isNotEmpty) {
+          ingredientMap[item.id!] = ing;
         }
       }
     }
-    state = state.copyWith(inventory: list, recipes: recipeMap);
+    state = state.copyWith(inventory: list, ingredients: ingredientMap);
   }
 
   void updateCategoryFilter(String category) {
@@ -130,9 +130,9 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
 
   String exportCsvData() {
     final buffer = StringBuffer();
-    buffer.writeln('ID,Barcode,Name,Category,Stock,Unit,MinStock,CostPrice,SellingPrice');
+    buffer.writeln('ID,Barcode,Name,Category,Stock,Unit,MinStock,CostPrice,SellingPrice,StockType');
     for (var item in state.inventory) {
-      buffer.writeln('${item.id},${item.barcode},"${item.name}",${item.category},${item.stock},${item.unit},${item.minStock},${item.costPrice},${item.price}');
+      buffer.writeln('${item.id},${item.barcode},"${item.name}",${item.category},${item.stock},${item.unit},${item.minStock},${item.costPrice},${item.price},${item.stockType}');
     }
     return buffer.toString();
   }
@@ -157,6 +157,7 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
         final minStock = double.tryParse(parts[6]) ?? 0.0;
         final costPrice = double.tryParse(parts[7]) ?? 0.0;
         final price = double.tryParse(parts[8]) ?? 0.0;
+        final stockType = parts.length > 9 ? parts[9].trim() : 'General';
 
         final matches = state.inventory.where((item) => item.barcode == barcode || item.name == name).toList();
         if (matches.isNotEmpty) {
@@ -168,6 +169,7 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
             category: category,
             minStock: minStock,
             unit: unit,
+            stockType: stockType,
           ));
         } else {
           await _dbService.insertInventoryItem(InventoryItem(
@@ -179,6 +181,7 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
             costPrice: costPrice,
             barcode: barcode,
             category: category,
+            stockType: stockType,
           ));
         }
       }
