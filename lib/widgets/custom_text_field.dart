@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CustomTextField extends StatelessWidget {
-  final String label;
+  final String? label;
   final String placeholder;
-  final TextEditingController controller;
+  final TextEditingController? controller;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final void Function(String)? onChange;
   final IconData? prefixIcon;
   final String? suffixText;
   final int maxLines;
@@ -21,6 +22,7 @@ class CustomTextField extends StatelessWidget {
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.onChange,
     this.prefixIcon,
     this.suffixText,
     this.maxLines = 1,
@@ -35,16 +37,19 @@ class CustomTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Upper case label with custom letter spacing
-        Text(
-          label.toUpperCase(),
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: const Color(0xFFBBCABF),
+        if(label != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom:8.0),
+          child: Text(
+            (label??"").toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: const Color(0xFFBBCABF),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
@@ -57,6 +62,7 @@ class CustomTextField extends StatelessWidget {
             fontWeight: FontWeight.w500,
             color: const Color(0xFFF8FAFC),
           ),
+          onChanged: onChange,
           decoration: InputDecoration(
             hintText: placeholder,
             hintStyle: GoogleFonts.inter(
@@ -74,8 +80,8 @@ class CustomTextField extends StatelessWidget {
             suffixText: suffixText,
             suffixStyle: const TextStyle(color: Colors.white, fontSize: 13),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+              horizontal: 10,
+              vertical: 0
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

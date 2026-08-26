@@ -11,7 +11,7 @@ class BusinessSetupViewModel extends StateNotifier<BusinessConfig> {
           address: '',
           phoneNumber: '',
           businessType: 'Grocery & Retail',
-          receiptLanguage: 'Dual (Sinhala + English)',
+          receiptLanguage: 'English',
           nayaPothaEnabled: true,
           kotEnabled: false,
           lankaQrEnabled: true,

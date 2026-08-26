@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/inventory_item.dart';
+import '../../services/database_service.dart';
 import '../../viewmodels/inventory_viewmodel.dart';
 import '../../widgets/custom_text_field.dart';
 import 'mock_scanner_dialog.dart';
@@ -30,6 +31,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late TextEditingController unitController;
   late TextEditingController minStockController;
   late String selectedStockType;
+  final List<Map<String, dynamic>> _tempIngredients = [];
 
   @override
   void initState() {
@@ -150,8 +152,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                         ),
                         icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF10B981)),
                         onPressed: () {
-                          showDialog(
+                          showModalBottomSheet(
                             context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
                             builder: (c) => MockScannerDialog(
                               onScanned: (code) {
                                 setState(() {
@@ -291,10 +295,38 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       icon: const Icon(Icons.receipt_long, size: 16),
                       label: const Text('LINK INGREDIENTS 🥗', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                       onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (c) => ProductIngredientsDialog(product: widget.existingProduct!),
-                        );
+                        if (isEdit) {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (c) => ProductIngredientsDialog(product: widget.existingProduct!),
+                          );
+                        } else {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (c) => ProductIngredientsDialog(
+                              product: InventoryItem(
+                                name: nameController.text.isEmpty ? 'New Product' : nameController.text,
+                                stock: 0,
+                                unit: '',
+                                minStock: 0,
+                                price: 0,
+                                costPrice: 0,
+                                stockType: 'Products',
+                              ),
+                              initialIngredients: _tempIngredients,
+                              onSaved: (list) {
+                                setState(() {
+                                  _tempIngredients.clear();
+                                  _tempIngredients.addAll(list);
+                                });
+                              },
+                            ),
+                          );
+                        }
                       },
                     ),
                   ],
@@ -378,7 +410,12 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               unit: unit,
                               minStock: minStock,
                               stockType: selectedStockType,
-                            ));
+                            )).then((generatedId) async {
+                              if (_tempIngredients.isNotEmpty) {
+                                await DatabaseService.instance.saveProductIngredients(generatedId, _tempIngredients);
+                                await widget.inventoryViewModel.loadInventory();
+                              }
+                            });
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Added new product: $name'), backgroundColor: const Color(0xFF10B981)),
                             );

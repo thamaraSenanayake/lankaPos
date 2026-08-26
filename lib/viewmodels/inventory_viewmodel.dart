@@ -101,9 +101,10 @@ class InventoryViewModel extends StateNotifier<InventoryState> {
     return list;
   }
 
-  Future<void> addProduct(InventoryItem item) async {
-    await _dbService.insertInventoryItem(item);
+  Future<int> addProduct(InventoryItem item) async {
+    final id = await _dbService.insertInventoryItem(item);
     await loadInventory();
+    return id;
   }
 
   Future<void> editProduct(InventoryItem item) async {

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import '../widgets/custom_text_field.dart';
+import '../services/printer_service.dart';
 
 class HardwareSettingsView extends ConsumerStatefulWidget {
   const HardwareSettingsView({super.key});
@@ -18,7 +21,7 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
   late TextEditingController phoneController;
   late TextEditingController footerController;
 
-  String receiptLanguage = 'Dual (Sinhala + English)';
+  String receiptLanguage = 'English';
   bool cashierLockEnabled = false;
   String cashierPin = '1234';
 
@@ -33,8 +36,8 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
     nameController = TextEditingController(text: config?.shopName ?? '');
     addrController = TextEditingController(text: config?.address ?? '');
     phoneController = TextEditingController(text: config?.phoneNumber ?? '');
-    footerController = TextEditingController(text: config?.footerMessage ?? 'ස්තූතියි! නැවත එන්න.');
-    receiptLanguage = config?.receiptLanguage ?? 'Dual (Sinhala + English)';
+    footerController = TextEditingController(text: config?.footerMessage ?? 'Thank You Come Again!');
+    receiptLanguage = config?.receiptLanguage ?? 'English';
     cashierLockEnabled = config?.cashierLockEnabled ?? false;
     cashierPin = config?.cashierPin ?? '1234';
   }
@@ -172,26 +175,7 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
               icon: Icons.edit_document,
               iconColor: Colors.cyanAccent,
               children: [
-                // Language
-                Text('RECEIPT LANGUAGE', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFFBBCABF))),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(6)),
-                  child: DropdownButtonFormField<String>(
-                    value: receiptLanguage,
-                    dropdownColor: const Color(0xFF0F172A),
-                    decoration: const InputDecoration(border: InputBorder.none),
-                    style: const TextStyle(color: Colors.white),
-                    items: ['Dual (Sinhala + English)', 'English Only', 'Sinhala Only']
-                        .map((lang) => DropdownMenuItem(value: lang, child: Text(lang)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => receiptLanguage = val);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
+
 
                 // Shop Name
                 CustomTextField(
@@ -383,38 +367,84 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
     showDialog(
       context: context,
       builder: (context) {
+        List<ScanResult> devices = [];
         bool isScanning = true;
+        StreamSubscription<List<ScanResult>>? subscription;
+
         return StatefulBuilder(
           builder: (context, setModalState) {
-            Future.delayed(const Duration(seconds: 2), () {
-              if (context.mounted && isScanning) {
-                setModalState(() => isScanning = false);
-              }
-            });
+            if (subscription == null) {
+              subscription = FlutterBluePlus.scanResults.listen((results) {
+                if (context.mounted) {
+                  setModalState(() {
+                    devices = results;
+                  });
+                }
+              });
+
+              FlutterBluePlus.startScan(timeout: const Duration(seconds: 4)).then((_) {
+                if (context.mounted) {
+                  setModalState(() {
+                    isScanning = false;
+                  });
+                }
+              }).catchError((_) {
+                if (context.mounted) {
+                  setModalState(() {
+                    isScanning = false;
+                  });
+                }
+              });
+            }
+
+            final displayDevices = devices
+                .where((r) => r.device.platformName.isNotEmpty)
+                .map((r) => r.device.platformName)
+                .toSet()
+                .toList();
 
             return AlertDialog(
               backgroundColor: const Color(0xFF1E293B),
               title: Text('Scan Bluetooth Printers', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white)),
               content: SizedBox(
                 width: 280,
-                child: isScanning
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CircularProgressIndicator(color: Color(0xFF10B981)),
-                          const SizedBox(height: 16),
-                          Text('Scanning for nearby thermal devices...', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF))),
-                        ],
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildDeviceTile('ESC/POS 58mm Printer (BT-100)'),
-                          _buildDeviceTile('ESC/POS 80mm Printer (BT-210)'),
-                          _buildDeviceTile('Star TSP100 Printer'),
-                        ],
-                      ),
+                height: 300,
+                child: Column(
+                  children: [
+                    if (isScanning) ...[
+                      const LinearProgressIndicator(color: Color(0xFF10B981), backgroundColor: Color(0xFF0F172A)),
+                      const SizedBox(height: 12),
+                      Text('Scanning for nearby thermal devices...', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFFBBCABF))),
+                      const SizedBox(height: 12),
+                    ],
+                    Expanded(
+                      child: displayDevices.isEmpty
+                          ? Center(
+                              child: Text(
+                                isScanning ? 'Searching...' : 'No Bluetooth devices found.',
+                                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF).withOpacity(0.5)),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: displayDevices.length,
+                              itemBuilder: (context, index) {
+                                return _buildDeviceTile(displayDevices[index]);
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    subscription?.cancel();
+                    FlutterBluePlus.stopScan();
+                    Navigator.pop(context);
+                  },
+                  child: const Text('CLOSE', style: TextStyle(color: Color(0xFFBBCABF))),
+                ),
+              ],
             );
           },
         );
@@ -439,7 +469,22 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
     );
   }
 
-  void _printTestReceipt(BuildContext context) {
+  void _printTestReceipt(BuildContext context) async {
+    final currentConfig = ref.read(dashboardProvider).config;
+    if (currentConfig != null) {
+      try {
+        final bytes = await PrinterService.instance.generateTestReceipt(
+          currentConfig,
+          printerName.contains('58') ? '58mm' : '80mm',
+        );
+        debugPrint('Generated ESC/POS Test receipt: ${bytes.length} bytes.');
+      } catch (e) {
+        debugPrint('Failed to generate ESC/POS bytes: $e');
+      }
+    }
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (context) {

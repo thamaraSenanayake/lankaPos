@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/sale.dart';
 import '../../viewmodels/dashboard_viewmodel.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../services/printer_service.dart';
 
 class PaymentDrawerDialog extends StatefulWidget {
   final DashboardState state;
@@ -33,136 +34,196 @@ class _PaymentDrawerDialogState extends State<PaymentDrawerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFF334155)),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E293B),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
       ),
-      title: Text(
-        'Checkout Invoice Payment',
-        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
-      content: Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Choose payment type for total LKR ${widget.viewModel.cartTotal.toStringAsFixed(2)}:',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF)),
+          // Drag handle indicator
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF475569),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+
+          // Header title and close button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildPaymentOptionChip('Cash 💵', selectedMethod == 'Cash', () => setState(() => selectedMethod = 'Cash')),
-              _buildPaymentOptionChip('Card 💳', selectedMethod == 'Card', () => setState(() => selectedMethod = 'Card')),
-              if (widget.state.config!.lankaQrEnabled)
-                _buildPaymentOptionChip('LANKAQR 📲', selectedMethod == 'LANKAQR', () => setState(() => selectedMethod = 'LANKAQR')),
-              if (widget.state.config!.nayaPothaEnabled)
-                _buildPaymentOptionChip('Naya (Credit) 📖', selectedMethod == 'Naya Potha', () => setState(() => selectedMethod = 'Naya Potha')),
+              Text(
+                'Checkout Invoice Payment',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Color(0xFFBBCABF), size: 20),
+                onPressed: () => Navigator.pop(context),
+              ),
             ],
           ),
+          const SizedBox(height: 8),
 
-          if (selectedMethod == 'Naya Potha') ...[
-            const SizedBox(height: 16),
-            CustomTextField(
-              label: 'Customer Details',
-              placeholder: "Enter customer's full name",
-              controller: customerController,
-            ),
-          ],
-
-          if (selectedMethod == 'LANKAQR') ...[
-            const SizedBox(height: 16),
-            Center(
+          Flexible(
+            child: SingleChildScrollView(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                    child: Image.network(
-                      'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=LANKAQR_INVOICE_TOTAL_${widget.viewModel.cartTotal}',
-                      width: 100,
-                      height: 100,
-                      errorBuilder: (c, e, s) => const Icon(Icons.qr_code_2, size: 100, color: Colors.black),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
                   Text(
-                    'Scan to pay LKR ${widget.viewModel.cartTotal.toStringAsFixed(0)}',
-                    style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF10B981), fontWeight: FontWeight.bold),
+                    'Choose payment type for total LKR ${widget.viewModel.cartTotal.toStringAsFixed(2)}:',
+                    style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFBBCABF)),
                   ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildPaymentOptionChip('Cash 💵', selectedMethod == 'Cash', () => setState(() => selectedMethod = 'Cash')),
+                      _buildPaymentOptionChip('Card 💳', selectedMethod == 'Card', () => setState(() => selectedMethod = 'Card')),
+                      if (widget.state.config!.lankaQrEnabled)
+                        _buildPaymentOptionChip('LANKAQR 📲', selectedMethod == 'LANKAQR', () => setState(() => selectedMethod = 'LANKAQR')),
+                      if (widget.state.config!.nayaPothaEnabled)
+                        _buildPaymentOptionChip('Naya (Credit) 📖', selectedMethod == 'Naya Potha', () => setState(() => selectedMethod = 'Naya Potha')),
+                    ],
+                  ),
+
+                  if (selectedMethod == 'Naya Potha') ...[
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      label: 'Customer Details',
+                      placeholder: "Enter customer's full name",
+                      controller: customerController,
+                    ),
+                  ],
+
+                  if (selectedMethod == 'LANKAQR') ...[
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                            child: Image.network(
+                              'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=LANKAQR_INVOICE_TOTAL_${widget.viewModel.cartTotal}',
+                              width: 100,
+                              height: 100,
+                              errorBuilder: (c, e, s) => const Icon(Icons.qr_code_2, size: 100, color: Colors.black),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Scan to pay LKR ${widget.viewModel.cartTotal.toStringAsFixed(0)}',
+                            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF10B981), fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    )
+                  ]
                 ],
               ),
-            )
-          ]
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Actions row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (widget.state.config!.kotEnabled && widget.state.orderType == 'Dine-In')
+                IconButton(
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.restaurant, color: Colors.orangeAccent),
+                  onPressed: () {
+                    _showMockKotTicketDialog(context, widget.state.cart, widget.state.orderType);
+                  },
+                ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('CANCEL', style: TextStyle(color: Color(0xFFBBCABF))),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: const Color(0xFF0F172A),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () async {
+                  if (selectedMethod == 'Naya Potha' && customerController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please specify customer name for credit logging.'),
+                        backgroundColor: Colors.orangeAccent,
+                      ),
+                    );
+                    return;
+                  }
+                  final customerName = selectedMethod == 'Naya Potha' ? customerController.text.trim() : null;
+                  final tempCartItems = List<SaleItem>.from(widget.state.cart);
+                  final tempTotal = widget.viewModel.cartTotal;
+                  final tempDiscount = widget.viewModel.cartDiscountAmount;
+
+                  Navigator.pop(context);
+
+                  final success = await widget.viewModel.checkout(
+                    paymentMethod: selectedMethod,
+                    customerName: customerName,
+                  );
+                  if (!context.mounted) return;
+
+                  if (success) {
+                    widget.onCheckoutSuccess?.call();
+                    final generatedSale = Sale(
+                      id: widget.state.salesHistory.isNotEmpty ? widget.state.salesHistory.first.id : 1,
+                      timestamp: DateTime.now(),
+                      items: tempCartItems,
+                      totalAmount: tempTotal,
+                      paymentMethod: selectedMethod,
+                      customerName: customerName,
+                      orderType: widget.state.orderType,
+                      discountAmount: tempDiscount,
+                    );
+                    _showMockPrintInvoiceDialog(context, generatedSale);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Checkout failed.'), backgroundColor: Colors.redAccent),
+                    );
+                  }
+                },
+                child: const Text('COMPLETE SALE', style: TextStyle(fontWeight: FontWeight.bold)),
+              )
+            ],
+          ),
         ],
       ),
-      actions: [
-        if (widget.state.config!.kotEnabled && widget.state.orderType == 'Dine-In')
-          TextButton.icon(
-            icon: const Icon(Icons.restaurant, size: 14, color: Colors.orangeAccent),
-            label: Text('KOT', style: GoogleFonts.inter(color: Colors.orangeAccent, fontSize: 12)),
-            onPressed: () {
-              _showMockKotTicketDialog(context, widget.state.cart, widget.state.orderType);
-            },
-          ),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('CANCEL', style: TextStyle(color: Color(0xFFBBCABF))),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981),
-            foregroundColor: const Color(0xFF0F172A),
-          ),
-          onPressed: () async {
-            if (selectedMethod == 'Naya Potha' && customerController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please specify customer name for credit logging.'),
-                  backgroundColor: Colors.orangeAccent,
-                ),
-              );
-              return;
-            }
-            final customerName = selectedMethod == 'Naya Potha' ? customerController.text.trim() : null;
-            final tempCartItems = List<SaleItem>.from(widget.state.cart);
-            final tempTotal = widget.viewModel.cartTotal;
-            final tempDiscount = widget.viewModel.cartDiscountAmount;
-
-            Navigator.pop(context);
-
-            final success = await widget.viewModel.checkout(
-              paymentMethod: selectedMethod,
-              customerName: customerName,
-            );
-            if (!context.mounted) return;
-
-            if (success) {
-              widget.onCheckoutSuccess?.call();
-              final generatedSale = Sale(
-                id: widget.state.salesHistory.isNotEmpty ? widget.state.salesHistory.first.id : 1,
-                timestamp: DateTime.now(),
-                items: tempCartItems,
-                totalAmount: tempTotal,
-                paymentMethod: selectedMethod,
-                customerName: customerName,
-                orderType: widget.state.orderType,
-                discountAmount: tempDiscount,
-              );
-              _showMockPrintInvoiceDialog(context, generatedSale);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Checkout failed.'), backgroundColor: Colors.redAccent),
-              );
-            }
-          },
-          child: const Text('COMPLETE SALE'),
-        )
-      ],
     );
   }
 
@@ -252,7 +313,19 @@ class _PaymentDrawerDialogState extends State<PaymentDrawerDialog> {
     );
   }
 
-  void _showMockPrintInvoiceDialog(BuildContext context, Sale sale) {
+  void _showMockPrintInvoiceDialog(BuildContext context, Sale sale) async {
+    final config = widget.state.config;
+    if (config != null) {
+      try {
+        final bytes = await PrinterService.instance.generateSaleReceipt(config, sale, '80mm');
+        debugPrint('Generated ESC/POS Sale receipt on checkout: ${bytes.length} bytes.');
+      } catch (e) {
+        debugPrint('Failed to generate ESC/POS checkout print bytes: $e');
+      }
+    }
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (context) {

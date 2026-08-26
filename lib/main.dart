@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/database_service.dart';
 import 'views/business_setup_view.dart';
-import 'views/dashboard_view.dart';
+import 'views/dashboard/dashboard_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

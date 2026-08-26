@@ -44,7 +44,7 @@ class DatabaseService {
         nayaPothaEnabled INTEGER NOT NULL,
         kotEnabled INTEGER NOT NULL,
         lankaQrEnabled INTEGER NOT NULL,
-        footerMessage TEXT NOT NULL DEFAULT 'ස්තූතියි! නැවත එන්න.',
+        footerMessage TEXT NOT NULL DEFAULT 'Thank You Come Again!',
         cashierLockEnabled INTEGER NOT NULL DEFAULT 0,
         cashierPin TEXT NOT NULL DEFAULT '1234'
       )

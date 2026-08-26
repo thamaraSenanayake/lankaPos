@@ -326,11 +326,13 @@ class InventoryView extends ConsumerWidget {
                     minimumSize: const Size.fromHeight(44),
                   ),
                   icon: const Icon(Icons.download, size: 16),
-                  label: const Text('Export CSV Backup'),
+                  label: const Text('Export CSV Backup',style: TextStyle(fontSize: 12),),
                   onPressed: () {
                     final csv = viewModel.exportCsvData();
-                    showDialog(
+                    showModalBottomSheet(
                       context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
                       builder: (c) => CSVDataSummaryDialog(
                         title: 'Exported Backup CSV Data',
                         csvData: csv,
@@ -348,10 +350,12 @@ class InventoryView extends ConsumerWidget {
                     minimumSize: const Size.fromHeight(44),
                   ),
                   icon: const Icon(Icons.upload, size: 16),
-                  label: const Text('Import CSV Stocks'),
+                  label: const Text('Import CSV Backup',style: TextStyle(fontSize: 12),),
                   onPressed: () {
-                    showDialog(
+                    showModalBottomSheet(
                       context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
                       builder: (c) => CSVImportDialog(inventoryViewModel: viewModel),
                     );
                   },

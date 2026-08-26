@@ -7,7 +7,7 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_dropdown.dart';
 import '../widgets/custom_switch.dart';
 import '../widgets/custom_text_field.dart';
-import 'dashboard_view.dart';
+import 'dashboard/dashboard_view.dart';
 
 class BusinessSetupView extends ConsumerStatefulWidget {
   const BusinessSetupView({super.key});
@@ -287,21 +287,7 @@ class _BusinessSetupViewState extends ConsumerState<BusinessSetupView> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 16),
-                            CustomDropdown<String>(
-                              label: 'Receipt Language',
-                              value: config.receiptLanguage,
-                              items: const [
-                                'Dual (Sinhala + English)',
-                                'English Only',
-                                'Sinhala Only',
-                                'Tamil Only',
-                              ],
-                              itemToString: (item) => item,
-                              onChanged: (val) {
-                                if (val != null) viewModel.updateReceiptLanguage(val);
-                              },
-                            ),
+
                           ],
                         ),
                       ),
