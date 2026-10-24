@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/business_setup_viewmodel.dart';
+import '../viewmodels/dashboard_viewmodel.dart';
 import '../widgets/business_type_card.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_dropdown.dart';
@@ -75,10 +76,10 @@ class _BusinessSetupViewState extends ConsumerState<BusinessSetupView> {
                 children: [
                   Row(
                     children: [
-                      const Icon(
-                        Icons.storefront,
-                        color: Color(0xFF10B981),
-                        size: 28,
+                      Image.asset(
+                        "assets/logo.png",
+                        height: 24,
+                        width: 24,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -119,6 +120,44 @@ class _BusinessSetupViewState extends ConsumerState<BusinessSetupView> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          _nameController.text = 'Lanka Super Mart';
+                          _addressController.text = '124 Galle Road, Colombo 03';
+                          _phoneController.text = '0771234567';
+                          viewModel.updateShopName('Lanka Super Mart');
+                          viewModel.updateAddress('124 Galle Road, Colombo 03');
+                          viewModel.updatePhoneNumber('0771234567');
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFF10B981).withOpacity(0.4),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.bolt, size: 14, color: Color(0xFF10B981)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Demo Fill',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF10B981),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -394,6 +433,8 @@ class _BusinessSetupViewState extends ConsumerState<BusinessSetupView> {
                     final success = await viewModel.saveSetup();
                     if (!context.mounted) return;
                     if (success) {
+                      await ref.read(dashboardProvider.notifier).reloadAll();
+                      if (!context.mounted) return;
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (context) => const DashboardView()),

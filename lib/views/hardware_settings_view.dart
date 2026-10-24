@@ -301,6 +301,19 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
                     onPressed: () => _forceSyncData(context),
                   ),
                 ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF10B981)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    icon: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF10B981)),
+                    label: const Text('Load Demo / Dummy Data', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+                    onPressed: () => _confirmLoadDummyData(context),
+                  ),
+                ),
               ],
             ),
 
@@ -627,6 +640,50 @@ class _HardwareSettingsViewState extends ConsumerState<HardwareSettingsView> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmLoadDummyData(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: Text(
+            'Load Demo Dummy Data? 📦',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          content: Text(
+            'This will populate your account with sample products, sales transactions, customer debt ledger, supplier invoices, and business expenses matching your business type.',
+            style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFBBCABF)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCEL', style: TextStyle(color: Color(0xFFBBCABF))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: const Color(0xFF0F172A),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                await ref.read(dashboardProvider.notifier).seedDummyData();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Dummy data successfully populated for your account!'),
+                      backgroundColor: Color(0xFF10B981),
+                    ),
+                  );
+                }
+              },
+              child: const Text('LOAD DATA'),
+            ),
+          ],
         );
       },
     );

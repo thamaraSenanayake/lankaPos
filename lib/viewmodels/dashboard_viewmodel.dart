@@ -89,8 +89,16 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
   Future<void> initDashboard() async {
     final config = await _dbService.getBusinessConfig();
     if (config != null) {
-      final sales = await _dbService.getSales();
-      final inventory = await _dbService.getInventory();
+      var sales = await _dbService.getSales();
+      var inventory = await _dbService.getInventory();
+      final creditAccounts = await _dbService.getCreditAccounts();
+
+      // Automatically seed dummy data for this created account if tables are empty
+      if (inventory.isEmpty && sales.isEmpty && creditAccounts.isEmpty) {
+        await _dbService.initializeDefaultData(config.businessType);
+        sales = await _dbService.getSales();
+        inventory = await _dbService.getInventory();
+      }
 
       String defaultOrderType = 'Retail';
       if (config.businessType == 'Restaurant & Hotel' || config.businessType == 'Cafe & Bakery') {
@@ -367,6 +375,19 @@ class DashboardViewModel extends StateNotifier<DashboardState> {
     return state.salesHistory
         .where((sale) => sale.paymentMethod == 'Naya Potha')
         .fold(0.0, (sum, sale) => sum + sale.totalAmount);
+  }
+
+  Future<void> reloadAll() async {
+    await initDashboard();
+    await _ref.read(inventoryProvider.notifier).loadInventory();
+    _ref.read(nayaPothaProvider.notifier).loadLedger();
+    _ref.read(businessHealthProvider.notifier).loadHealth();
+  }
+
+  Future<void> seedDummyData() async {
+    final bType = state.config?.businessType ?? 'Grocery & Retail';
+    await _dbService.initializeDefaultData(bType);
+    await reloadAll();
   }
 
   Future<void> clearAllData() async {

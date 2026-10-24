@@ -191,8 +191,9 @@ class DatabaseService {
   }
 
   Future<void> initializeDefaultData(String businessType) async {
-    // await populateDefaultInventory(businessType);
-    // await populateDefaultNaya();
+    await populateDefaultInventory(businessType);
+    await populateDefaultNaya();
+    await populateDefaultSales(businessType);
   }
 
   Future<BusinessConfig?> getBusinessConfig() async {
@@ -255,58 +256,316 @@ class DatabaseService {
     }
   }
 
-  // Future<void> populateDefaultInventory(String businessType) async {
-  //   final db = await database;
-  //   await db.delete('inventory');
+  Future<void> populateDefaultInventory(String businessType) async {
+    final db = await database;
+    await db.delete('product_ingredients');
+    await db.delete('inventory');
 
-  //   final List<InventoryItem> defaults = [];
+    if (businessType == 'Cafe & Bakery') {
+      // Raw Ingredients
+      final flourId = await db.insert('inventory', InventoryItem(
+        name: "Baker's Flour",
+        stock: 50.0,
+        unit: 'kg',
+        minStock: 10.0,
+        price: 220.0,
+        costPrice: 175.0,
+        barcode: '880001',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
 
-  //   if (businessType == 'Cafe & Bakery') {
-  //     defaults.addAll([
-  //       InventoryItem(name: 'Egg Bun', stock: 50, unit: 'pcs', minStock: 10, price: 120.0, costPrice: 90.0, barcode: '4792000201', category: 'Short Eats'),
-  //       InventoryItem(name: 'Fish Pastry', stock: 40, unit: 'pcs', minStock: 10, price: 140.0, costPrice: 110.0, barcode: '4792000202', category: 'Short Eats'),
-  //       InventoryItem(name: 'Ulundu Vadai', stock: 60, unit: 'pcs', minStock: 15, price: 80.0, costPrice: 50.0, barcode: '4792000203', category: 'Short Eats'),
-  //       InventoryItem(name: 'Milk Coffee', stock: 100, unit: 'cups', minStock: 20, price: 150.0, costPrice: 90.0, barcode: '4792000204', category: 'Beverages'),
-  //       InventoryItem(name: 'Plain Tea', stock: 120, unit: 'cups', minStock: 20, price: 60.0, costPrice: 30.0, barcode: '4792000205', category: 'Beverages'),
-  //       InventoryItem(name: 'Chocolate Gateau Slice', stock: 15, unit: 'pcs', minStock: 5, price: 350.0, costPrice: 280.0, barcode: '4792000206', category: 'Snacks'),
-  //       InventoryItem(name: 'Woodapple Juice', stock: 30, unit: 'pcs', minStock: 8, price: 200.0, costPrice: 140.0, barcode: '4792000207', category: 'Beverages'),
-  //     ]);
-  //   } else if (businessType == 'Restaurant & Hotel') {
-  //     defaults.addAll([
-  //       InventoryItem(name: 'Chicken Kottu (L)', stock: 35, unit: 'plates', minStock: 5, price: 850.0, costPrice: 650.0, barcode: '4793000301', category: 'Kottu'),
-  //       InventoryItem(name: 'Egg Kottu', stock: 40, unit: 'plates', minStock: 5, price: 650.0, costPrice: 480.0, barcode: '4793000302', category: 'Kottu'),
-  //       InventoryItem(name: 'Cheese Kottu', stock: 20, unit: 'plates', minStock: 5, price: 950.0, costPrice: 700.0, barcode: '4793000303', category: 'Kottu'),
-  //       InventoryItem(name: 'Chicken Fried Rice', stock: 50, unit: 'plates', minStock: 8, price: 800.0, costPrice: 600.0, barcode: '4793000304', category: 'Rice'),
-  //       InventoryItem(name: 'Seni Sambal Egg Hopper', stock: 80, unit: 'pcs', minStock: 15, price: 120.0, costPrice: 80.0, barcode: '4793000305', category: 'Hoppers'),
-  //       InventoryItem(name: 'Plain Hopper', stock: 150, unit: 'pcs', minStock: 25, price: 50.0, costPrice: 25.0, barcode: '4793000306', category: 'Hoppers'),
-  //       InventoryItem(name: 'Ginger Beer (EGB)', stock: 60, unit: 'bottles', minStock: 12, price: 180.0, costPrice: 130.0, barcode: '4793000307', category: 'Beverages'),
-  //     ]);
-  //   } else if (businessType == 'Service & Other') {
-  //     defaults.addAll([
-  //       InventoryItem(name: 'Standard Haircut', stock: 999, unit: 'sessions', minStock: 0, price: 700.0, costPrice: 150.0, barcode: '4794000401', category: 'Salon'),
-  //       InventoryItem(name: 'Beard Trim & Style', stock: 999, unit: 'sessions', minStock: 0, price: 400.0, costPrice: 100.0, barcode: '4794000402', category: 'Salon'),
-  //       InventoryItem(name: 'Full Vehicle Wash', stock: 100, unit: 'cars', minStock: 10, price: 2500.0, costPrice: 800.0, barcode: '4794000403', category: 'Car Care'),
-  //       InventoryItem(name: 'Interior Detailing', stock: 50, unit: 'cars', minStock: 5, price: 1500.0, costPrice: 500.0, barcode: '4794000404', category: 'Car Care'),
-  //       InventoryItem(name: 'General Consultation', stock: 999, unit: 'sessions', minStock: 0, price: 1000.0, costPrice: 0.0, barcode: '4794000405', category: 'General'),
-  //       InventoryItem(name: 'Urgent Device Repair', stock: 100, unit: 'repairs', minStock: 5, price: 3000.0, costPrice: 1200.0, barcode: '4794000406', category: 'General'),
-  //     ]);
-  //   } else {
-  //     defaults.addAll([
-  //       InventoryItem(name: 'Keeri Samba Rice 5kg', stock: 45, unit: 'Bags', minStock: 10, price: 1200.0, costPrice: 1050.0, barcode: '47920010012', category: 'Groceries'),
-  //       InventoryItem(name: 'Anchor Milk Powder 400g', stock: 3, unit: 'Boxes', minStock: 5, price: 1150.0, costPrice: 1020.0, barcode: '94100010022', category: 'Dairy'),
-  //       InventoryItem(name: 'Munchee Super Cream Cracker 190g', stock: 18, unit: 'Packs', minStock: 8, price: 250.0, costPrice: 210.0, barcode: '47910020001', category: 'Snacks'),
-  //       InventoryItem(name: 'Astra Margarine 250g', stock: 15, unit: 'tubs', minStock: 5, price: 550.0, costPrice: 480.0, barcode: '4791000103', category: 'Dairy'),
-  //       InventoryItem(name: 'White Sugar 1kg', stock: 200, unit: 'kg', minStock: 30, price: 240.0, costPrice: 210.0, barcode: '4791000102', category: 'Groceries'),
-  //       InventoryItem(name: 'Red Dhal 1kg', stock: 120, unit: 'kg', minStock: 20, price: 320.0, costPrice: 280.0, barcode: '4791000104', category: 'Groceries'),
-  //       InventoryItem(name: 'Dilmah Tea 100g', stock: 60, unit: 'boxes', minStock: 10, price: 450.0, costPrice: 380.0, barcode: '4791000105', category: 'Beverages'),
-  //       InventoryItem(name: 'Coconut Oil 1L', stock: 75, unit: 'bottles', minStock: 12, price: 680.0, costPrice: 590.0, barcode: '4791000106', category: 'Groceries'),
-  //     ]);
-  //   }
+      final eggsId = await db.insert('inventory', InventoryItem(
+        name: 'Fresh Farm Eggs',
+        stock: 150.0,
+        unit: 'pcs',
+        minStock: 25.0,
+        price: 45.0,
+        costPrice: 38.0,
+        barcode: '880002',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
 
-  //   for (var item in defaults) {
-  //     await db.insert('inventory', item.toMap());
-  //   }
-  // }
+      final milkId = await db.insert('inventory', InventoryItem(
+        name: "Fresh Cow's Milk",
+        stock: 30.0,
+        unit: 'L',
+        minStock: 5.0,
+        price: 380.0,
+        costPrice: 300.0,
+        barcode: '880003',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final sugarId = await db.insert('inventory', InventoryItem(
+        name: 'Fine White Sugar',
+        stock: 40.0,
+        unit: 'kg',
+        minStock: 10.0,
+        price: 240.0,
+        costPrice: 200.0,
+        barcode: '880004',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final coffeeId = await db.insert('inventory', InventoryItem(
+        name: 'Roasted Coffee Powder',
+        stock: 10.0,
+        unit: 'kg',
+        minStock: 2.0,
+        price: 2400.0,
+        costPrice: 1800.0,
+        barcode: '880005',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final teaId = await db.insert('inventory', InventoryItem(
+        name: 'Ceylon BOPF Tea',
+        stock: 12.0,
+        unit: 'kg',
+        minStock: 2.0,
+        price: 1600.0,
+        costPrice: 1200.0,
+        barcode: '880006',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      // Sellable Products with Linked Ingredients
+      final eggBunId = await db.insert('inventory', InventoryItem(
+        name: 'Egg Bun',
+        stock: 50.0,
+        unit: 'pcs',
+        minStock: 10.0,
+        price: 120.0,
+        costPrice: 80.0,
+        barcode: '4792000201',
+        category: 'Short Eats',
+        stockType: 'Products',
+      ).toMap());
+
+      final coffeeCupId = await db.insert('inventory', InventoryItem(
+        name: 'Milk Coffee',
+        stock: 100.0,
+        unit: 'cups',
+        minStock: 20.0,
+        price: 150.0,
+        costPrice: 90.0,
+        barcode: '4792000204',
+        category: 'Beverages',
+        stockType: 'Products',
+      ).toMap());
+
+      final teaCupId = await db.insert('inventory', InventoryItem(
+        name: 'Plain Tea',
+        stock: 120.0,
+        unit: 'cups',
+        minStock: 20.0,
+        price: 60.0,
+        costPrice: 30.0,
+        barcode: '4792000205',
+        category: 'Beverages',
+        stockType: 'Products',
+      ).toMap());
+
+      // Link recipes into product_ingredients
+      await db.insert('product_ingredients', {'productId': eggBunId, 'ingredientId': flourId, 'quantity': 0.1});
+      await db.insert('product_ingredients', {'productId': eggBunId, 'ingredientId': eggsId, 'quantity': 1.0});
+
+      await db.insert('product_ingredients', {'productId': coffeeCupId, 'ingredientId': coffeeId, 'quantity': 0.015});
+      await db.insert('product_ingredients', {'productId': coffeeCupId, 'ingredientId': milkId, 'quantity': 0.12});
+      await db.insert('product_ingredients', {'productId': coffeeCupId, 'ingredientId': sugarId, 'quantity': 0.015});
+
+      await db.insert('product_ingredients', {'productId': teaCupId, 'ingredientId': teaId, 'quantity': 0.01});
+      await db.insert('product_ingredients', {'productId': teaCupId, 'ingredientId': sugarId, 'quantity': 0.015});
+
+      // General Bakery Items
+      final bakeryItems = [
+        InventoryItem(name: 'Fish Pastry', stock: 40.0, unit: 'pcs', minStock: 10.0, price: 140.0, costPrice: 95.0, barcode: '4792000202', category: 'Short Eats', stockType: 'General'),
+        InventoryItem(name: 'Ulundu Vadai', stock: 60.0, unit: 'pcs', minStock: 15.0, price: 80.0, costPrice: 50.0, barcode: '4792000203', category: 'Short Eats', stockType: 'General'),
+        InventoryItem(name: 'Chicken Roll', stock: 35.0, unit: 'pcs', minStock: 10.0, price: 150.0, costPrice: 100.0, barcode: '4792000208', category: 'Short Eats', stockType: 'General'),
+        InventoryItem(name: 'Kimbula Banis', stock: 45.0, unit: 'pcs', minStock: 10.0, price: 90.0, costPrice: 60.0, barcode: '4792000209', category: 'Short Eats', stockType: 'General'),
+        InventoryItem(name: 'Chocolate Gateau Slice', stock: 18.0, unit: 'pcs', minStock: 5.0, price: 350.0, costPrice: 240.0, barcode: '4792000206', category: 'Snacks', stockType: 'General'),
+        InventoryItem(name: 'Woodapple Juice', stock: 30.0, unit: 'glasses', minStock: 8.0, price: 200.0, costPrice: 140.0, barcode: '4792000207', category: 'Beverages', stockType: 'General'),
+      ];
+      for (var item in bakeryItems) {
+        await db.insert('inventory', item.toMap());
+      }
+    } else if (businessType == 'Restaurant & Hotel') {
+      // Raw Ingredients
+      final rotiId = await db.insert('inventory', InventoryItem(
+        name: 'Chopped Godamba Roti',
+        stock: 30.0,
+        unit: 'kg',
+        minStock: 5.0,
+        price: 450.0,
+        costPrice: 300.0,
+        barcode: '890001',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final eggsId = await db.insert('inventory', InventoryItem(
+        name: 'Fresh Farm Eggs',
+        stock: 140.0,
+        unit: 'pcs',
+        minStock: 20.0,
+        price: 45.0,
+        costPrice: 38.0,
+        barcode: '890002',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final chickenId = await db.insert('inventory', InventoryItem(
+        name: 'Curry Chicken Pieces',
+        stock: 20.0,
+        unit: 'kg',
+        minStock: 4.0,
+        price: 1300.0,
+        costPrice: 950.0,
+        barcode: '890003',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final cheeseId = await db.insert('inventory', InventoryItem(
+        name: 'Cheddar Cheese Block',
+        stock: 10.0,
+        unit: 'kg',
+        minStock: 2.0,
+        price: 2800.0,
+        costPrice: 2100.0,
+        barcode: '890005',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      final riceId = await db.insert('inventory', InventoryItem(
+        name: 'Basmati Rice',
+        stock: 40.0,
+        unit: 'kg',
+        minStock: 10.0,
+        price: 650.0,
+        costPrice: 480.0,
+        barcode: '890006',
+        category: 'Raw Materials',
+        stockType: 'Ingredients',
+      ).toMap());
+
+      // Sellable Products
+      final chkKottuId = await db.insert('inventory', InventoryItem(
+        name: 'Chicken Kottu (L)',
+        stock: 40.0,
+        unit: 'plates',
+        minStock: 5.0,
+        price: 950.0,
+        costPrice: 650.0,
+        barcode: '4793000301',
+        category: 'Kottu',
+        stockType: 'Products',
+      ).toMap());
+
+      final cheeseKottuId = await db.insert('inventory', InventoryItem(
+        name: 'Cheese Kottu',
+        stock: 25.0,
+        unit: 'plates',
+        minStock: 5.0,
+        price: 1150.0,
+        costPrice: 800.0,
+        barcode: '4793000303',
+        category: 'Kottu',
+        stockType: 'Products',
+      ).toMap());
+
+      final eggKottuId = await db.insert('inventory', InventoryItem(
+        name: 'Egg Kottu',
+        stock: 35.0,
+        unit: 'plates',
+        minStock: 5.0,
+        price: 700.0,
+        costPrice: 480.0,
+        barcode: '4793000302',
+        category: 'Kottu',
+        stockType: 'Products',
+      ).toMap());
+
+      final friedRiceId = await db.insert('inventory', InventoryItem(
+        name: 'Chicken Fried Rice',
+        stock: 45.0,
+        unit: 'plates',
+        minStock: 8.0,
+        price: 850.0,
+        costPrice: 580.0,
+        barcode: '4793000304',
+        category: 'Rice',
+        stockType: 'Products',
+      ).toMap());
+
+      // Link recipes
+      await db.insert('product_ingredients', {'productId': chkKottuId, 'ingredientId': rotiId, 'quantity': 0.3});
+      await db.insert('product_ingredients', {'productId': chkKottuId, 'ingredientId': chickenId, 'quantity': 0.15});
+      await db.insert('product_ingredients', {'productId': chkKottuId, 'ingredientId': eggsId, 'quantity': 1.0});
+
+      await db.insert('product_ingredients', {'productId': cheeseKottuId, 'ingredientId': rotiId, 'quantity': 0.3});
+      await db.insert('product_ingredients', {'productId': cheeseKottuId, 'ingredientId': cheeseId, 'quantity': 0.08});
+      await db.insert('product_ingredients', {'productId': cheeseKottuId, 'ingredientId': eggsId, 'quantity': 1.0});
+
+      await db.insert('product_ingredients', {'productId': eggKottuId, 'ingredientId': rotiId, 'quantity': 0.3});
+      await db.insert('product_ingredients', {'productId': eggKottuId, 'ingredientId': eggsId, 'quantity': 2.0});
+
+      await db.insert('product_ingredients', {'productId': friedRiceId, 'ingredientId': riceId, 'quantity': 0.25});
+      await db.insert('product_ingredients', {'productId': friedRiceId, 'ingredientId': chickenId, 'quantity': 0.1});
+      await db.insert('product_ingredients', {'productId': friedRiceId, 'ingredientId': eggsId, 'quantity': 1.0});
+
+      // Other Restaurant Items
+      final restaurantItems = [
+        InventoryItem(name: 'Seni Sambal Egg Hopper', stock: 80.0, unit: 'pcs', minStock: 15.0, price: 130.0, costPrice: 85.0, barcode: '4793000305', category: 'Hoppers', stockType: 'General'),
+        InventoryItem(name: 'Plain Hopper', stock: 150.0, unit: 'pcs', minStock: 25.0, price: 50.0, costPrice: 25.0, barcode: '4793000306', category: 'Hoppers', stockType: 'General'),
+        InventoryItem(name: 'Devilled Chicken Portion', stock: 25.0, unit: 'plates', minStock: 5.0, price: 750.0, costPrice: 520.0, barcode: '4793000308', category: 'Side Dishes', stockType: 'General'),
+        InventoryItem(name: 'Ginger Beer (EGB)', stock: 60.0, unit: 'bottles', minStock: 12.0, price: 180.0, costPrice: 130.0, barcode: '4793000307', category: 'Beverages', stockType: 'General'),
+        InventoryItem(name: 'Fresh Lime Soda', stock: 40.0, unit: 'glasses', minStock: 10.0, price: 220.0, costPrice: 100.0, barcode: '4793000309', category: 'Beverages', stockType: 'General'),
+      ];
+      for (var item in restaurantItems) {
+        await db.insert('inventory', item.toMap());
+      }
+    } else if (businessType == 'Service & Other') {
+      final serviceItems = [
+        InventoryItem(name: 'Standard Haircut', stock: 999.0, unit: 'sessions', minStock: 0.0, price: 800.0, costPrice: 150.0, barcode: '4794000401', category: 'Salon', stockType: 'General'),
+        InventoryItem(name: 'Beard Trim & Styling', stock: 999.0, unit: 'sessions', minStock: 0.0, price: 450.0, costPrice: 80.0, barcode: '4794000402', category: 'Salon', stockType: 'General'),
+        InventoryItem(name: 'Full Vehicle Wash & Vacuum', stock: 100.0, unit: 'cars', minStock: 10.0, price: 2800.0, costPrice: 850.0, barcode: '4794000403', category: 'Car Care', stockType: 'General'),
+        InventoryItem(name: 'Interior Body Polish', stock: 50.0, unit: 'cars', minStock: 5.0, price: 3500.0, costPrice: 1200.0, barcode: '4794000404', category: 'Car Care', stockType: 'General'),
+        InventoryItem(name: 'Urgent Smartphone Screen Repair', stock: 40.0, unit: 'repairs', minStock: 5.0, price: 4500.0, costPrice: 2200.0, barcode: '4794000406', category: 'Repairs', stockType: 'General'),
+        InventoryItem(name: 'IT Support Consultation', stock: 999.0, unit: 'hours', minStock: 0.0, price: 1500.0, costPrice: 0.0, barcode: '4794000405', category: 'Services', stockType: 'General'),
+      ];
+      for (var item in serviceItems) {
+        await db.insert('inventory', item.toMap());
+      }
+    } else {
+      // Grocery & Retail
+      final groceryItems = [
+        InventoryItem(name: 'Keeri Samba Rice 5kg', stock: 45.0, unit: 'Bags', minStock: 10.0, price: 1450.0, costPrice: 1200.0, barcode: '47920010012', category: 'Groceries', stockType: 'General'),
+        InventoryItem(name: 'Anchor Milk Powder 400g', stock: 28.0, unit: 'Boxes', minStock: 8.0, price: 1150.0, costPrice: 1020.0, barcode: '94100010022', category: 'Dairy', stockType: 'General'),
+        InventoryItem(name: 'Munchee Super Cream Cracker 190g', stock: 60.0, unit: 'Packs', minStock: 15.0, price: 250.0, costPrice: 210.0, barcode: '47910020001', category: 'Snacks', stockType: 'General'),
+        InventoryItem(name: 'Munchee Lemon Puff 200g', stock: 40.0, unit: 'Packs', minStock: 10.0, price: 260.0, costPrice: 220.0, barcode: '47910020002', category: 'Snacks', stockType: 'General'),
+        InventoryItem(name: 'Astra Margarine 250g', stock: 35.0, unit: 'tubs', minStock: 8.0, price: 550.0, costPrice: 480.0, barcode: '4791000103', category: 'Dairy', stockType: 'General'),
+        InventoryItem(name: 'White Sugar 1kg', stock: 150.0, unit: 'kg', minStock: 25.0, price: 240.0, costPrice: 210.0, barcode: '4791000102', category: 'Groceries', stockType: 'General'),
+        InventoryItem(name: 'Red Dhal (Parippu) 1kg', stock: 120.0, unit: 'kg', minStock: 20.0, price: 320.0, costPrice: 280.0, barcode: '4791000104', category: 'Groceries', stockType: 'General'),
+        InventoryItem(name: 'Dilmah Premium Ceylon Tea 100g', stock: 55.0, unit: 'boxes', minStock: 10.0, price: 450.0, costPrice: 380.0, barcode: '4791000105', category: 'Beverages', stockType: 'General'),
+        InventoryItem(name: 'Pure Coconut Oil 1L', stock: 40.0, unit: 'bottles', minStock: 12.0, price: 680.0, costPrice: 590.0, barcode: '4791000106', category: 'Groceries', stockType: 'General'),
+        InventoryItem(name: 'Maliban Gold Marie 80g', stock: 80.0, unit: 'Packs', minStock: 20.0, price: 120.0, costPrice: 95.0, barcode: '47910020003', category: 'Snacks', stockType: 'General'),
+        InventoryItem(name: 'Sunlight Lemon Soap 115g', stock: 90.0, unit: 'bars', minStock: 15.0, price: 160.0, costPrice: 130.0, barcode: '4791000107', category: 'Household', stockType: 'General'),
+        InventoryItem(name: 'MD Mixed Fruit Jam 300g', stock: 25.0, unit: 'jars', minStock: 5.0, price: 420.0, costPrice: 350.0, barcode: '4791000108', category: 'Groceries', stockType: 'General'),
+      ];
+      for (var item in groceryItems) {
+        await db.insert('inventory', item.toMap());
+      }
+    }
+  }
 
   // --- Credit Accounts (Debtors) operations ---
   Future<List<CreditAccount>> getCreditAccounts() async {
@@ -379,42 +638,445 @@ class DatabaseService {
     return await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Future<void> populateDefaultNaya() async {
-  //   final db = await database;
-  //   await db.delete('credit_accounts');
-  //   await db.delete('supplier_ledger');
-  //   await db.delete('expenses');
+  Future<void> populateDefaultNaya() async {
+    final db = await database;
+    await db.delete('credit_accounts');
+    await db.delete('supplier_ledger');
+    await db.delete('expenses');
 
-  //   final debtors = [
-  //     CreditAccount(name: 'Nimal Perera', phone: '0771234567', balance: 12400.0, lastUpdated: DateTime.now().subtract(const Duration(days: 2))),
-  //     CreditAccount(name: 'Saman Kumara', phone: '0719876543', balance: 3200.0, lastUpdated: DateTime.now()),
-  //     CreditAccount(name: 'Pathum Bandara', phone: '0725556666', balance: 4500.0, lastUpdated: DateTime.now().subtract(const Duration(days: 3))),
-  //   ];
+    final debtors = [
+      CreditAccount(
+        name: 'Nimal Perera',
+        phone: '0771234567',
+        balance: 12400.0,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      CreditAccount(
+        name: 'Saman Kumara',
+        phone: '0719876543',
+        balance: 3200.0,
+        lastUpdated: DateTime.now(),
+      ),
+      CreditAccount(
+        name: 'Pathum Bandara',
+        phone: '0725556666',
+        balance: 4500.0,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
+      ),
+      CreditAccount(
+        name: 'Kasun Jayawardena',
+        phone: '0768889900',
+        balance: 7850.0,
+        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      CreditAccount(
+        name: 'Anura Silva',
+        phone: '0783334444',
+        balance: 1650.0,
+        lastUpdated: DateTime.now(),
+      ),
+    ];
 
-  //   for (var debtor in debtors) {
-  //     await db.insert('credit_accounts', debtor.toMap());
-  //   }
+    for (var debtor in debtors) {
+      await db.insert('credit_accounts', debtor.toMap());
+    }
 
-  //   final suppliers = [
-  //     SupplierAccount(name: 'Cargills Foods', phone: '0112345678', balance: 35000.0, dueDate: DateTime.now().add(const Duration(days: 3)), lastUpdated: DateTime.now().subtract(const Duration(days: 1))),
-  //     SupplierAccount(name: 'Unilever Ceylon', phone: '0119876543', balance: 18500.0, dueDate: DateTime.now().add(const Duration(days: 7)), lastUpdated: DateTime.now().subtract(const Duration(days: 2))),
-  //     SupplierAccount(name: 'Local Veggie Wholesale', phone: '0779998888', balance: 5000.0, dueDate: DateTime.now().add(const Duration(days: 1)), lastUpdated: DateTime.now()),
-  //   ];
+    final suppliers = [
+      SupplierAccount(
+        name: 'Cargills Ceylon PLC',
+        phone: '0112345678',
+        balance: 35000.0,
+        dueDate: DateTime.now().add(const Duration(days: 3)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      SupplierAccount(
+        name: 'Unilever Ceylon Ltd',
+        phone: '0119876543',
+        balance: 18500.0,
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      SupplierAccount(
+        name: 'Maliban Biscuit Manufactories',
+        phone: '0114567890',
+        balance: 14200.0,
+        dueDate: DateTime.now().add(const Duration(days: 5)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
+      ),
+      SupplierAccount(
+        name: 'Local Wholesale Distributors',
+        phone: '0779998888',
+        balance: 5000.0,
+        dueDate: DateTime.now().add(const Duration(days: 1)),
+        lastUpdated: DateTime.now(),
+      ),
+    ];
 
-  //   for (var supplier in suppliers) {
-  //     await db.insert('supplier_ledger', supplier.toMap());
-  //   }
+    for (var supplier in suppliers) {
+      await db.insert('supplier_ledger', supplier.toMap());
+    }
 
-  //   final expensesList = [
-  //     Expense(category: 'Rent', amount: 30000.0, note: 'Shop rent for August', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 1)),
-  //     Expense(category: 'Bills', amount: 12000.0, note: 'CEB Electricity bill payment', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 5)),
-  //     Expense(category: 'Wages', amount: 25000.0, note: 'Assistant helper cashier salary', timestamp: DateTime(DateTime.now().year, DateTime.now().month, 10)),
-  //   ];
+    final now = DateTime.now();
+    final expensesList = [
+      Expense(
+        category: 'Rent',
+        amount: 35000.0,
+        note: 'Monthly shop space rental payment',
+        timestamp: DateTime(now.year, now.month, 1, 9, 0),
+      ),
+      Expense(
+        category: 'Bills',
+        amount: 14200.0,
+        note: 'CEB Electricity commercial bill payment',
+        timestamp: DateTime(now.year, now.month, 5, 11, 30),
+      ),
+      Expense(
+        category: 'Bills',
+        amount: 2800.0,
+        note: 'National Water Board commercial bill',
+        timestamp: DateTime(now.year, now.month, 6, 14, 15),
+      ),
+      Expense(
+        category: 'Wages',
+        amount: 28000.0,
+        note: 'Cashier assistant monthly salary',
+        timestamp: DateTime(now.year, now.month, 10, 17, 0),
+      ),
+      Expense(
+        category: 'Supplies',
+        amount: 4500.0,
+        note: 'Kraft paper bags, receipt paper rolls & packaging',
+        timestamp: DateTime(now.year, now.month, 12, 10, 0),
+      ),
+    ];
 
-  //   for (var exp in expensesList) {
-  //     await db.insert('expenses', exp.toMap());
-  //   }
-  // }
+    for (var exp in expensesList) {
+      await db.insert('expenses', exp.toMap());
+    }
+  }
+
+  Future<void> populateDefaultSales(String businessType) async {
+    final db = await database;
+    await db.delete('sale_items');
+    await db.delete('sales');
+
+    final now = DateTime.now();
+    List<Map<String, dynamic>> salesData = [];
+
+    if (businessType == 'Cafe & Bakery') {
+      salesData = [
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 8, 30).toIso8601String(),
+          'totalAmount': 540.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Dine-In',
+          'customerName': null,
+          'items': [
+            {'name': 'Milk Coffee', 'price': 150.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Egg Bun', 'price': 120.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 10, 15).toIso8601String(),
+          'totalAmount': 550.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Takeaway',
+          'customerName': null,
+          'items': [
+            {'name': 'Chocolate Gateau Slice', 'price': 350.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Woodapple Juice', 'price': 200.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 13, 20).toIso8601String(),
+          'totalAmount': 700.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Dine-In',
+          'customerName': null,
+          'items': [
+            {'name': 'Fish Pastry', 'price': 140.0, 'quantity': 3, 'discount': 0.0},
+            {'name': 'Ulundu Vadai', 'price': 80.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Plain Tea', 'price': 60.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 15, 45).toIso8601String(),
+          'totalAmount': 600.0,
+          'paymentMethod': 'Card',
+          'orderType': 'Dine-In',
+          'customerName': null,
+          'items': [
+            {'name': 'Chicken Roll', 'price': 150.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Milk Coffee', 'price': 150.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 3)).toIso8601String(),
+          'totalAmount': 720.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Takeaway',
+          'customerName': null,
+          'items': [
+            {'name': 'Egg Bun', 'price': 120.0, 'quantity': 4, 'discount': 0.0},
+            {'name': 'Plain Tea', 'price': 60.0, 'quantity': 4, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 6)).toIso8601String(),
+          'totalAmount': 1260.0,
+          'paymentMethod': 'Naya Potha',
+          'orderType': 'Dine-In',
+          'customerName': 'Nimal Perera',
+          'items': [
+            {'name': 'Chocolate Gateau Slice', 'price': 350.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Fish Pastry', 'price': 140.0, 'quantity': 4, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 2, hours: 2)).toIso8601String(),
+          'totalAmount': 1100.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Takeaway',
+          'customerName': null,
+          'items': [
+            {'name': 'Fish Pastry', 'price': 140.0, 'quantity': 5, 'discount': 0.0},
+            {'name': 'Ulundu Vadai', 'price': 80.0, 'quantity': 5, 'discount': 0.0},
+          ],
+        },
+      ];
+    } else if (businessType == 'Restaurant & Hotel') {
+      salesData = [
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 12, 30).toIso8601String(),
+          'totalAmount': 2060.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Dine-In',
+          'customerName': null,
+          'items': [
+            {'name': 'Chicken Fried Rice', 'price': 850.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Ginger Beer (EGB)', 'price': 180.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 13, 45).toIso8601String(),
+          'totalAmount': 1170.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Takeaway',
+          'customerName': null,
+          'items': [
+            {'name': 'Chicken Kottu (L)', 'price': 950.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Fresh Lime Soda', 'price': 220.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 15, 15).toIso8601String(),
+          'totalAmount': 3410.0,
+          'paymentMethod': 'Card',
+          'orderType': 'Dine-In',
+          'customerName': null,
+          'items': [
+            {'name': 'Cheese Kottu', 'price': 1150.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Devilled Chicken Portion', 'price': 750.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Ginger Beer (EGB)', 'price': 180.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 2)).toIso8601String(),
+          'totalAmount': 2640.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Dine-In',
+          'customerName': null,
+          'items': [
+            {'name': 'Egg Kottu', 'price': 700.0, 'quantity': 3, 'discount': 0.0},
+            {'name': 'Ginger Beer (EGB)', 'price': 180.0, 'quantity': 3, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 5)).toIso8601String(),
+          'totalAmount': 2420.0,
+          'paymentMethod': 'Naya Potha',
+          'orderType': 'Dine-In',
+          'customerName': 'Saman Kumara',
+          'items': [
+            {'name': 'Chicken Kottu (L)', 'price': 950.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Seni Sambal Egg Hopper', 'price': 130.0, 'quantity': 4, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 2, hours: 4)).toIso8601String(),
+          'totalAmount': 1020.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Takeaway',
+          'customerName': null,
+          'items': [
+            {'name': 'Plain Hopper', 'price': 50.0, 'quantity': 10, 'discount': 0.0},
+            {'name': 'Seni Sambal Egg Hopper', 'price': 130.0, 'quantity': 4, 'discount': 0.0},
+          ],
+        },
+      ];
+    } else if (businessType == 'Service & Other') {
+      salesData = [
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 10, 0).toIso8601String(),
+          'totalAmount': 1250.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Standard Haircut', 'price': 800.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Beard Trim & Styling', 'price': 450.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 13, 30).toIso8601String(),
+          'totalAmount': 2800.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Full Vehicle Wash & Vacuum', 'price': 2800.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 16, 0).toIso8601String(),
+          'totalAmount': 4500.0,
+          'paymentMethod': 'Card',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Urgent Smartphone Screen Repair', 'price': 4500.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 3)).toIso8601String(),
+          'totalAmount': 3500.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Interior Body Polish', 'price': 3500.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 2, hours: 4)).toIso8601String(),
+          'totalAmount': 1500.0,
+          'paymentMethod': 'Naya Potha',
+          'orderType': 'Retail',
+          'customerName': 'Pathum Bandara',
+          'items': [
+            {'name': 'IT Support Consultation', 'price': 1500.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+      ];
+    } else {
+      // Grocery & Retail
+      salesData = [
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 9, 30).toIso8601String(),
+          'totalAmount': 2010.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Keeri Samba Rice 5kg', 'price': 1450.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'White Sugar 1kg', 'price': 240.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Red Dhal (Parippu) 1kg', 'price': 320.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 11, 45).toIso8601String(),
+          'totalAmount': 2100.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Anchor Milk Powder 400g', 'price': 1150.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Munchee Super Cream Cracker 190g', 'price': 250.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Dilmah Premium Ceylon Tea 100g', 'price': 450.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 15, 15).toIso8601String(),
+          'totalAmount': 1550.0,
+          'paymentMethod': 'Card',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Pure Coconut Oil 1L', 'price': 680.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Astra Margarine 250g', 'price': 550.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Sunlight Lemon Soap 115g', 'price': 160.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': DateTime(now.year, now.month, now.day, 17, 0).toIso8601String(),
+          'totalAmount': 920.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'MD Mixed Fruit Jam 300g', 'price': 420.0, 'quantity': 1, 'discount': 0.0},
+            {'name': 'Maliban Gold Marie 80g', 'price': 120.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Munchee Lemon Puff 200g', 'price': 260.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 2)).toIso8601String(),
+          'totalAmount': 3380.0,
+          'paymentMethod': 'Cash',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Keeri Samba Rice 5kg', 'price': 1450.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'White Sugar 1kg', 'price': 240.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 1, hours: 5)).toIso8601String(),
+          'totalAmount': 2750.0,
+          'paymentMethod': 'Naya Potha',
+          'orderType': 'Retail',
+          'customerName': 'Nimal Perera',
+          'items': [
+            {'name': 'Anchor Milk Powder 400g', 'price': 1150.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Dilmah Premium Ceylon Tea 100g', 'price': 450.0, 'quantity': 1, 'discount': 0.0},
+          ],
+        },
+        {
+          'timestamp': now.subtract(const Duration(days: 2, hours: 3)).toIso8601String(),
+          'totalAmount': 2000.0,
+          'paymentMethod': 'LANKAQR',
+          'orderType': 'Retail',
+          'customerName': null,
+          'items': [
+            {'name': 'Pure Coconut Oil 1L', 'price': 680.0, 'quantity': 2, 'discount': 0.0},
+            {'name': 'Red Dhal (Parippu) 1kg', 'price': 320.0, 'quantity': 2, 'discount': 0.0},
+          ],
+        },
+      ];
+    }
+
+    for (var saleMap in salesData) {
+      final items = saleMap['items'] as List<Map<String, dynamic>>;
+      final saleId = await db.insert('sales', {
+        'timestamp': saleMap['timestamp'],
+        'totalAmount': saleMap['totalAmount'],
+        'paymentMethod': saleMap['paymentMethod'],
+        'customerName': saleMap['customerName'],
+        'orderType': saleMap['orderType'],
+        'discountAmount': 0.0,
+      });
+
+      for (var item in items) {
+        await db.insert('sale_items', {
+          'saleId': saleId,
+          'name': item['name'],
+          'price': item['price'],
+          'quantity': item['quantity'],
+          'discount': item['discount'],
+        });
+      }
+    }
+  }
 
   // --- Sales operations ---
   Future<int> insertSale(Sale sale) async {

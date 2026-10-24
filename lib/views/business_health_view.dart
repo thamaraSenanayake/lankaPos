@@ -394,33 +394,43 @@ class BusinessHealthView extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(color: Color(0xFF0F172A), shape: BoxShape.circle),
-                child: Icon(icon, color: const Color(0xFFBBCABF), size: 18),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    exp.note.isEmpty ? exp.category : exp.note,
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(color: Color(0xFF0F172A), shape: BoxShape.circle),
+                  child: Icon(icon, color: const Color(0xFFBBCABF), size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        exp.note.isEmpty ? exp.category : exp.note,
+                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$formattedDate ${exp.photoPath.isNotEmpty ? " • 📷 Receipt" : ""}',
+                        style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFFBBCABF)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$formattedDate ${exp.photoPath.isNotEmpty ? " • 📷 Receipt" : ""}',
-                    style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFFBBCABF)),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '- LKR ${exp.amount.toStringAsFixed(0)}',
